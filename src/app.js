@@ -1,9 +1,12 @@
 const express = require("express");
+const inventoryRoutes = require("./routes/inventoryRoutes");
 
 const app = express();
 
 // Middleware to parse JSON
 app.use(express.json());
+
+app.use("/api/inventory", inventoryRoutes);
 
 // Test route
 app.get("/", (req, res) => {
