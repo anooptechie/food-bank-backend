@@ -1,11 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const inventoryController = require("../controllers/inventoryController");
 
-router.get("/test", (req, res) => {
-  res.json({
-    status: "success",
-    message: "Inventory Route is Working",
-  });
-});
+router.get("/test", inventoryController.testInventory);
 
 module.exports = router;
