@@ -6,7 +6,7 @@ const app = express();
 // Middleware to parse JSON
 app.use(express.json());
 
-app.use("/api/inventory", inventoryRoutes);
+app.use("/api/inventory", inventoryRoutes); //route mounting
 
 // Test route
 app.get("/", (req, res) => {
