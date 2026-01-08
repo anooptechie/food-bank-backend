@@ -4,4 +4,6 @@ const inventoryController = require("../controllers/inventoryController");
 
 router.get("/test", inventoryController.testInventory);
 
+router.get("/alerts", inventoryController.getLowStockItems);
+
 module.exports = router;
