@@ -6,4 +6,6 @@ router.get("/test", inventoryController.testInventory);
 
 router.get("/alerts", inventoryController.getLowStockItems);
 
+router.get("/expiring", inventoryController.getExpiringItems)
+
 module.exports = router;
