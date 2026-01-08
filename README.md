@@ -108,6 +108,23 @@ Copy code
 
 ---
 
+## ✅ Current Progress
+
+The backend currently supports the following core features:
+
+- ✔️ Project environment and boilerplate setup
+- ✔️ MongoDB Atlas connection using Mongoose
+- ✔️ Inventory schema design with expiry and threshold tracking
+- ✔️ Clean route–controller architecture
+- ✔️ `GET /api/inventory/alerts`
+  - Returns items where `quantity < minThreshold`
+- ✔️ `GET /api/inventory/expiring`
+  - Returns items expiring within the next 7 days
+- ✔️ API testing and validation using Postman
+
+At this stage, the backend fully supports **inventory alert use cases** for low stock and near-expiry items.
+
+
 ## 🔐 Environment Variables (`.env`)
 
 Stored in the **project root** and never committed to GitHub.

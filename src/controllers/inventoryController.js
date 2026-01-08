@@ -54,3 +54,20 @@ exports.getExpiringItems = async (req, res) => {
     });
   }
 };
+
+exports.addItems = async (req, res) => {
+  try {
+    const newItem = await InventoryItem.create(req.body);
+    res.status(200).json({
+      status: "success",
+      data: {
+        item: newItem,
+      },
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "fail",
+      message: error.message,
+    });
+  }
+};
