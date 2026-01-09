@@ -1,4 +1,4 @@
-# 🏦 Local NGO / Food Bank Management System (Backend)
+# 🏦 Food Bank Management System (Backend)
 
 A backend system designed to help **old age homes** manage inventory efficiently, reduce food waste, and generate alerts for **low stock** and **expiring items**.
 
