@@ -39,7 +39,7 @@ Fix
 
 Ensure routes and controllers are always kept in sync. Either restore the controller function or remove/comment the route that references it.
 
-exports.testInventory = (req, res) => {
+exports.testInventory = (req, res) => {c
   res.json({
     status: "success",
     message: "Inventory controller is working",

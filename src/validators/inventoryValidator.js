@@ -47,9 +47,32 @@ exports.validate = (req, res, next) => {
 //.isISO8601() international standard for representing date and time
 //.toDate() I'll turn this string into a Date object so the inventoryController.js can perform math on it (like checking if it's 7 days away).
 
-//.setHours(0, 0, 0, 0) 
+//.setHours(0, 0, 0, 0)
 //If a user tries to donate an item that expires today (Jan 9th), but it is currently 2:00 PM, the computer sees:
 // Current Time: Jan 9, 14:00:00
 //User Input (expiryDate): Jan 9, 00:00:00 (Standard default for dates)
 
 //Because 00:00:00 is technically "earlier" than 14:00:00, the computer thinks Jan 9th has already passed and will throw an error. By using .setHours(0,0,0,0), you move the current time back to the very start of the day, making the comparison fair.
+
+exports.updateInventoryValidator = [
+  body("quantity")
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage("Quantity must be a non-negative integer"),
+
+  body("minThreshold")
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage("Minimum threshold must be a non-negative integer"),
+
+  body("expiryDate")
+    .optional()
+    .isISO8601()
+    .withMessage("Expiry date must be a valid date")
+    .custom((value) => {
+      if (new Date(value) < new Date()) {
+        throw new Error("Expiry date must be in the future");
+      }
+      return true;
+    }),
+];
