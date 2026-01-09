@@ -1,6 +1,6 @@
 # 🏦 Local NGO / Food Bank Management System (Backend)
 
-A backend system designed to help **local NGOs and food banks** manage inventory efficiently, reduce food waste, and generate alerts for **low stock** and **expiring items**.
+A backend system designed to help **old age homes** manage inventory efficiently, reduce food waste, and generate alerts for **low stock** and **expiring items**.
 
 This project is intentionally built **step by step**, with strong emphasis on **fundamentals, clarity, and real-world correctness**.
 
@@ -8,7 +8,7 @@ This project is intentionally built **step by step**, with strong emphasis on **
 
 ## 📌 Why this project?
 
-Many small NGOs still rely on Excel sheets or paper to track food inventory. This often leads to:
+Many small old age homes and still rely on Excel sheets or paper to track food inventory. This often leads to:
 
 - food expiring unnoticed
 - poor visibility into stock levels
@@ -123,7 +123,6 @@ The backend currently supports the following core features:
 - ✔️ API testing and validation using Postman
 
 At this stage, the backend fully supports **inventory alert use cases** for low stock and near-expiry items.
-
 
 ## 🔐 Environment Variables (`.env`)
 
