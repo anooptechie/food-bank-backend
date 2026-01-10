@@ -9,6 +9,7 @@ const InventoryItem = require("../models/inventoryModel");
 exports.getLowStockItems = async (req, res) => {
   try {
     const lowStockItems = await InventoryItem.find({
+      isDeleted: false,
       $expr: { $lt: ["$quantity", "$minThreshold"] },
     });
 
@@ -35,6 +36,7 @@ exports.getExpiringItems = async (req, res) => {
     sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
 
     const expiringItems = await InventoryItem.find({
+      isDeleted: false,
       expiryDate: {
         $gte: today,
         $lte: sevenDaysFromNow,
@@ -110,8 +112,8 @@ exports.updateInventoryItem = async (req, res) => {
       });
     }
 
-    const updatedItem = await InventoryItem.findByIdAndUpdate(
-      req.params.id,
+    const updatedItem = await InventoryItem.findOneAndUpdate(
+      { _id: req.params.id, isDeleted: false },
       updates,
       {
         new: true, //returns updated document
@@ -131,6 +133,36 @@ exports.updateInventoryItem = async (req, res) => {
       data: {
         item: updatedItem,
       },
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "fail",
+      message: error.message,
+    });
+  }
+};
+
+exports.softDeleteInventoryItem = async (req, res) => {
+  try {
+    const item = await InventoryItem.findOneAndUpdate(
+      { _id: req.params.id, isDeleted: false },
+      {
+        isDeleted: true,
+        deletedAt: new Date(),
+      },
+      { new: true }
+    );
+
+    if (!item) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Inventory item not found or already deleted",
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: "Inventory item soft deleted successfully",
     });
   } catch (error) {
     res.status(400).json({

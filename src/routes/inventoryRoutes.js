@@ -5,7 +5,9 @@ const {
   createInventoryValidator,
   validate,
 } = require("../validators/inventoryValidator");
-const {updateInventoryValidator} = require("../validators/inventoryValidator")
+const {
+  updateInventoryValidator,
+} = require("../validators/inventoryValidator");
 
 router.get("/test", inventoryController.testInventory);
 
@@ -20,7 +22,13 @@ router.post(
   inventoryController.addItems
 );
 
-router.patch("/:id", updateInventoryValidator, validate, inventoryController.updateInventoryItem 
-)
+router.patch(
+  "/:id",
+  updateInventoryValidator,
+  validate,
+  inventoryController.updateInventoryItem
+);
+
+router.delete("/:id", inventoryController.softDeleteInventoryItem);
 
 module.exports = router;
