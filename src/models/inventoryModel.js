@@ -27,11 +27,26 @@ const itemSchema = new mongoose.Schema(
       type: Date,
       required: [true, "Expiry Date is required"],
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true, //automatically adds createdAt, updatedAt
   }
 );
+
+//QUERY MIDDLEWARE for isDeleted in softDeleteInventoryItem controller
+itemSchema.pre(/^find/, function (next) {
+  this.where({ isDeleted: { $ne: true } });
+  // next()
+});
 
 const InventoryItem = mongoose.model("InventoryItem", itemSchema);
 
