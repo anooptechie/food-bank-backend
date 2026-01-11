@@ -77,12 +77,12 @@ exports.addItems = async (req, res) => {
 exports.updateInventoryItem = async (req, res) => {
   try {
     //defining all the fields that are not allowed to be updated
-    const restrictedFields = ["name", "category"];
+    // const restrictedFields = ["name", "category"];
 
     //check if any key/field in the incoming request is matching with restrictedFields
-    const attemptedFields = Object.keys(req.body).filter((key) =>
-      restrictedFields.includes(key)
-    );
+    // const attemptedFields = Object.keys(req.body).filter((key) =>
+    //   restrictedFields.includes(key)
+    // );
 
     //Strict Mode Removed
     // if (attemptedFields.length > 0) {
@@ -96,22 +96,42 @@ exports.updateInventoryItem = async (req, res) => {
     // const { quantity, minThreshold, expiryDate } = req.body;
     // const updates = { quantity, minThreshold, expiryDate };
 
-    const allowedUpdateFields = ["quantity", "minThreshold", "expiryDate"];
+    // const allowedUpdateFields = ["quantity", "minThreshold", "expiryDate"];
+
+    const role = req.user.role;
+    const adminAllowedFields = ["quantity", "minThreshold", "expiryDate"];
+    const volunteerAllowedFields = ["quantity"];
+
+    const allowedFields =
+      role === "admin" ? adminAllowedFields : volunteerAllowedFields;
+
+    // 2️⃣ Build updates object safely
     const updates = {};
 
-    Object.keys(req.body).forEach((key) => {
-      if (allowedUpdateFields.includes(key)) {
-        updates[key] = req.body[key];
+    Object.keys(req.body).forEach((field) => {
+      if (allowedFields.includes(field)) {
+        //“Is the client trying to update a field I explicitly allow for this role?”
+        updates[field] = req.body[field];
+        //Now data moves from req.body to updates. | Now Updates contain safe data fields
       }
     });
 
+    //Silently ignore forbidden fields when something valid exists;
+    //explain clearly when nothing valid exists — in the user’s role language.
+    const allowedFieldsMessage =
+      role === "admin"
+        ? "Only quantity, minThreshold, or expiryDate can be updated"
+        : "Only quantity can be updated";
+
+    // 3️⃣ Reject empty or invalid updates
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({
         status: "fail",
-        message: "Only quantity, minThreshold, or expiryDate can be updated",
+        message: allowedFieldsMessage,
       });
     }
 
+    // 4️⃣ Update only non-deleted inventory items
     const updatedItem = await InventoryItem.findOneAndUpdate(
       { _id: req.params.id, isDeleted: false },
       updates,
@@ -121,6 +141,7 @@ exports.updateInventoryItem = async (req, res) => {
       }
     );
 
+    // 5️⃣ Handle not found
     if (!updatedItem) {
       return res.status(404).json({
         status: "fail",
@@ -128,6 +149,7 @@ exports.updateInventoryItem = async (req, res) => {
       });
     }
 
+    // 6️⃣ Success response
     res.status(200).json({
       status: "success",
       data: {

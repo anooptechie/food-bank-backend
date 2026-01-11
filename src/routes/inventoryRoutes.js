@@ -8,7 +8,9 @@ const {
 const {
   updateInventoryValidator,
 } = require("../validators/inventoryValidator");
+const { protect, restrictTo } = require("../middlewares/authMiddleware");
 
+router.use(protect);
 router.get("/test", inventoryController.testInventory);
 
 router.get("/alerts", inventoryController.getLowStockItems);
@@ -17,6 +19,7 @@ router.get("/expiring", inventoryController.getExpiringItems);
 
 router.post(
   "/",
+  restrictTo("admin"),
   createInventoryValidator,
   validate,
   inventoryController.addItems
@@ -29,6 +32,10 @@ router.patch(
   inventoryController.updateInventoryItem
 );
 
-router.delete("/:id", inventoryController.softDeleteInventoryItem);
+router.delete(
+  "/:id",
+  restrictTo("admin"),
+  inventoryController.softDeleteInventoryItem
+);
 
 module.exports = router;
