@@ -7,7 +7,7 @@ Accepted
 
 ## Context
 
-The system manages inventory operations for local NGOs / food banks where multiple users interact with shared data.
+The system manages inventory operations for old age homes food banks where multiple users interact with shared data.
 
 Key requirements identified:
 - Only authenticated users should access inventory APIs

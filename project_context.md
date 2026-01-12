@@ -7,38 +7,39 @@ Local NGO / Food Bank Management System (Backend)
 
 ## Purpose
 
-This document serves as the **canonical snapshot** of the project.
+This document is the **canonical snapshot** of the backend.
 
 It captures:
 - stable facts
-- final decisions
-- current system capabilities
+- final architectural decisions
+- verified system behavior
 
 It intentionally excludes:
 - debugging steps
-- trial-and-error attempts
-- rationale (covered by ADRs)
+- experiments
+- rationale (documented separately in ADRs)
 
 ---
 
 ## Project Scope
 
-A backend system for managing donated inventory for old age homes / food banks, with a strong focus on:
+A backend system for managing donated food inventory for old age homes / local NGOs, with emphasis on:
 - data safety
-- controlled access
-- role-based operations
+- predictable behavior
+- role-based access control
+- centralized error handling
 
-No frontend integration is implemented yet.
+Frontend is **not yet implemented**.
 
 ---
 
-## Tech Stack (Current)
+## Tech Stack (Frozen – V1.1)
 
 - Node.js
 - Express.js
 - MongoDB Atlas
 - Mongoose
-- JWT (JSON Web Tokens)
+- JWT (short-lived access tokens)
 - Git & GitHub
 
 ---
@@ -46,10 +47,11 @@ No frontend integration is implemented yet.
 ## Architecture
 
 - Layered architecture:
-  - Routes → Controllers → Models → Database
+  Routes → Middleware → Controllers → Models → Database
+- Authentication & authorization enforced via middleware
 - Business rules enforced in controllers
-- Authentication and authorization enforced via middleware
-- No ORM-side implicit updates
+- No implicit ORM-side updates
+- Centralized error handling via global error middleware
 
 ---
 
@@ -64,15 +66,19 @@ Fields:
 - `minThreshold` (Number, required, ≥ 0)
 - `expiryDate` (Date, required)
 - `isDeleted` (Boolean, default: false)
+- `deletedAt` (Date, optional)
 - `createdAt`, `updatedAt` (timestamps)
+
+---
 
 ### User
 
 Fields:
-- `name` (String)
-- `email` (String, unique)
-- `password` (String, hashed)
+- `name` (String, required)
+- `email` (String, unique, required)
+- `password` (String, hashed, never returned)
 - `role` (Enum: `admin`, `volunteer`)
+- `isActive` (Boolean)
 - `createdAt`, `updatedAt` (timestamps)
 
 ---
@@ -82,7 +88,8 @@ Fields:
 - JWT-based authentication
 - Short-lived access tokens
 - Stateless authentication model
-- Tokens are required for all protected routes
+- Tokens required for all protected routes
+- Token payload contains only `userId`
 
 ---
 
@@ -90,48 +97,45 @@ Fields:
 
 ### Roles
 
-- **Admin**
-  - Create inventory items
-  - Delete inventory items (soft delete)
-  - Create volunteer users
-  - Update all allowed inventory fields
+**Admin**
+- Create inventory items
+- Soft delete inventory items
+- Create volunteer users
+- Update all allowed inventory fields
 
-- **Volunteer**
-  - View inventory alerts
-  - Update inventory quantity only
+**Volunteer**
+- View inventory alerts
+- Update inventory quantity only
 
 ### Enforcement
 
 - Route-level authorization via `restrictTo`
 - Field-level authorization enforced inside controllers
+- Deny-by-default update strategy
 
 ---
 
 ## Inventory Operations
 
 ### Create Inventory Item
-
 - `POST /api/inventory`
 - Admin only
 
 ### Update Inventory Item
-
 - `PATCH /api/inventory/:id`
-- Role-based field permissions:
+- Role-based field allow-list:
   - Admin: `quantity`, `minThreshold`, `expiryDate`
   - Volunteer: `quantity`
-- Forbidden fields are ignored if at least one valid field exists
-- Requests with only forbidden fields are rejected
+- Forbidden fields ignored if at least one valid field exists
+- Request rejected if **only forbidden fields** are provided
 
 ### Delete Inventory Item
-
 - `DELETE /api/inventory/:id`
-- Soft delete using `isDeleted = true`
+- Soft delete (`isDeleted = true`)
 
 ### Alerts
-
 - Low stock alerts: `GET /api/inventory/alerts`
-- Expiring items: `GET /api/inventory/expiring`
+- Expiring items (next 7 days): `GET /api/inventory/expiring`
 
 ---
 
@@ -139,41 +143,18 @@ Fields:
 
 - Inventory items are never physically removed
 - Deleted items:
-  - are excluded from queries
   - cannot be updated
-- Query middleware ensures deleted records are filtered automatically
+  - are excluded from all queries
+- Enforced via query middleware + controller filters
 
 ---
 
-## User Management
+## Global Error Handling (V1.1)
 
-- No public signup
-- Initial admin created via one-time bootstrap script
-- Volunteers created only by admin users
+- Centralized global error handler
+- Controllers never send error responses directly
+- All expected errors use `AppError`
+- All async controllers wrapped with `asyncErrorHandler`
+- Errors propagate exclusively via `next(err)`
 
----
-
-## Documentation
-
-- `README.md` – Project overview
-- `PROJECT_CONTEXT.md` – Canonical snapshot (this file)
-- `ADR-001` – Soft Delete Strategy
-- `ADR-002` – Authentication & Authorization Strategy
-- `ADR-003` – Role-Based Field-Level Updates
-- `DEBUGGING.md` – Real errors and resolutions
-
----
-
-## Not Implemented Yet
-
-- Audit / inventory history
-- Automated tests
-- Frontend
-- Deployment
-
----
-
-## Status
-
-Active development
 
