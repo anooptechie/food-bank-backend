@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "Password is required"],
       minlength: 8,
-      select: false, // never return password by default
+      select: false,
     },
     role: {
       type: String,
@@ -32,25 +32,24 @@ const userSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, //automatically adds createdAt, updatedAt
+    timestamps: true,
   }
 );
 
-//HASHING LOGIC using pre-save middleware and bcrypt
+// Hash password before saving
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 
   this.password = await bcrypt.hash(this.password, 12);
-//   next();
+  next();
 });
 
-//Schema Method | Password Comparison
+// Password comparison
 userSchema.methods.correctPassword = async function (
   candidatePassword,
   userPassword
 ) {
-  return await bcrypt.compare(candidatePassword, userPassword);
+  return bcrypt.compare(candidatePassword, userPassword);
 };
 
-const User = mongoose.model("User", userSchema);
-module.exports = User;
+module.exports = mongoose.model("User", userSchema);

@@ -2,6 +2,7 @@ const express = require("express");
 const inventoryRoutes = require("./routes/inventoryRoutes");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
+const globalErrorHandler = require("./controllers/errorController");
 
 const app = express();
 
@@ -16,5 +17,7 @@ app.use("/api/users", userRoutes);
 app.get("/", (req, res) => {
   res.send("Food Bank API is running");
 });
+
+app.use(globalErrorHandler);
 
 module.exports = app;

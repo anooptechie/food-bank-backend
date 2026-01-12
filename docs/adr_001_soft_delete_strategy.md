@@ -7,7 +7,7 @@ Accepted
 
 ## Context
 
-The system manages inventory for local NGOs / food banks, where items such as food grains, supplies, and donated goods are tracked over time.
+The system manages inventory for old age homes food banks, where items such as food grains, supplies, and donated goods are tracked over time.
 
 In this domain:
 - Inventory data may be updated frequently by different roles (admin, volunteer)

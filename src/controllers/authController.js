@@ -1,6 +1,8 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const User = require("../models/userModel");
+const asyncErrorHandler = require("../utils/asyncError");
+const AppError = require("../utils/appError")
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -8,44 +10,31 @@ const signToken = (id) => {
   });
 };
 
-exports.login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+exports.login = asyncErrorHandler(async (req, res, next) => {
+  const { email, password } = req.body;
 
-    //1.Check if email and password exist
-    if (!email || !password) {
-      return res.status(400).json({
-        status: "fail",
-        message: "Please provide email and password",
-      });
-    }
-
-    //2.Find user and explicitly select password
-    const user = await User.findOne({ email }).select("+password");
-
-    //3.Check if user exists and password is correct
-    if (!user || !(await user.correctPassword(password, user.password))) {
-      return res.status(401).json({
-        status: "fail",
-        message: "Incorrect email or password",
-      });
-    }
-
-    //4. Generate Token
-    const token = signToken(user._id);
-
-    //5. Send Response
-    res.status(200).json({
-      status: "success",
-      token,
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: "error",
-      message: error.message,
-    });
+  // 1. Check if email and password exist
+  if (!email || !password) {
+    return next(new AppError("Please provide email and password", 400));
   }
-};
+
+  // 2. Find user and explicitly select password
+  const user = await User.findOne({ email }).select("+password");
+
+  // 3. Check if user exists and password is correct
+  if (!user || !(await user.correctPassword(password, user.password))) {
+    return next(new AppError("Incorrect email or password", 401));
+  }
+
+  // 4. Generate token
+  const token = signToken(user._id);
+
+  // 5. Send response
+  res.status(200).json({
+    status: "success",
+    token,
+  });
+});
 
 // exports.signup = async (req, res) => {
 //   try {
@@ -73,3 +62,5 @@ exports.login = async (req, res) => {
 //     });
 //   }
 // };
+
+//jwt.sign(payload, secret, options)
