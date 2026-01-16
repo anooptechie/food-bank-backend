@@ -1,158 +1,198 @@
-# ✅ UPDATED `README.md` (Aligned with Reality)
+📦 Inventory / Resource Management System (Backend)
 
-```md
-🏦 Local NGO / Food Bank Management System (Backend)
+A backend-first Inventory & Resource Management System, originally built for NGOs / food banks, but designed to be domain-flexible and scalable across different resource-based organizations.
 
-A production-inspired backend for managing food inventory in old age homes / local NGOs with a strong focus on safety, clarity, and role-based access.
+This project focuses on real backend engineering concerns like authorization, data safety, scalability, and predictable error handling.
 
-This project is intentionally built step-by-step to learn **real backend engineering**, not shortcuts.
+Why This Project?
+Inventory and resource tracking is a common backend problem across many domains — from NGOs and warehouses to internal teams managing shared resources.
 
----
+This project focuses on solving core backend challenges that appear in most inventory systems, such as:
 
-## Why This Project?
+maintaining consistent and accurate state
 
-Many small NGOs still rely on spreadsheets or paper records to manage food inventory, leading to:
-- food expiring unnoticed
-- poor stock visibility
-- accidental overwrites
-- lack of accountability
+enforcing access control at the API level
 
-This backend aims to:
-- centralize inventory data
-- track quantities, thresholds, and expiry dates
-- enforce role-based permissions
-- prevent unsafe updates
-- provide predictable error handling
+preventing unsafe or partial updates
 
----
+providing operational visibility through analytics
 
-## Tech Stack (V1.1 – Frozen)
+designing scalable read and write patterns
 
-### Backend
-- Node.js
-- Express.js
-- MongoDB Atlas
-- Mongoose
+The goal is not to model a single domain, but to build a reusable backend foundation that can adapt to different resource-based workflows with minimal changes.
 
-### Authentication
-- JWT (short-lived tokens)
-- Stateless authentication
+Tech Stack (V1.2)
+Backend
 
-### Tooling
-- dotenv
-- nodemon
-- Git & GitHub
+Node.js
 
-⚠️ TypeScript migration planned later.  
+Express.js
+
+MongoDB Atlas
+
+Mongoose
+
+Authentication & Authorization
+
+JWT (short-lived access tokens)
+
+Stateless authentication
+
+Role-based access control (admin, volunteer)
+
+Field-level update restrictions
+
+Tooling
+
+dotenv
+
+nodemon
+
+Git & GitHub
+
+⚠️ TypeScript migration planned later.
 This version intentionally uses JavaScript for clarity.
 
----
-
-## Folder Structure
-
+Folder Structure
 food-bank-backend/
-├── .env
-├── package.json
 ├── README.md
-├── DEBUGGING.md
 ├── PROJECT_CONTEXT.md
-├── scripts/
-│ └── createAdmin.js
+├── DEBUGGING.md
+├── package.json
+├── .env
 └── src/
-├── app.js
-├── server.js
-├── config/
-│ └── db.js
-├── models/
-│ ├── inventoryModel.js
-│ └── userModel.js
-├── controllers/
-│ ├── inventoryController.js
-│ ├── authController.js
-│ └── userController.js
-├── middlewares/
-│ └── authMiddleware.js
-├── utils/
-│ ├── appError.js
-│ └── asyncError.js
-└── routes/
-├── inventoryRoutes.js
-├── authRoutes.js
-└── userRoutes.js
+    ├── app.js
+    ├── server.js
+    ├── config/
+    │   └── db.js
+    ├── models/
+    │   ├── inventoryModel.js
+    │   └── userModel.js
+    ├── controllers/
+    │   ├── inventoryController.js
+    │   ├── authController.js
+    │   └── userController.js
+    ├── middlewares/
+    │   └── authMiddleware.js
+    ├── utils/
+    │   ├── appError.js
+    │   └── asyncError.js
+    └── routes/
+        ├── inventoryRoutes.js
+        ├── authRoutes.js
+        └── userRoutes.js
 
-yaml
-Copy code
+Implemented Features
+Inventory Management
 
----
+Create inventory items (admin only)
 
-## Implemented Features
+Safe PATCH updates with allow-list enforcement
 
-### Inventory Management
-- Create inventory items (admin only)
-- Safe PATCH updates with allow-list enforcement
-- Low stock alerts
-- Expiring items alerts (next 7 days)
-- Soft delete (no physical removal)
+Field-level authorization (role-aware)
 
----
+Soft delete (isDeleted)
 
-### Authentication & Authorization
-- JWT-based login
-- Short-lived access tokens
-- Protected routes
-- Role-based authorization (`admin`, `volunteer`)
-- Field-level update restrictions
+Query middleware to exclude deleted items
 
----
+Inventory Listing (Scalable APIs)
 
-### Global Error Handling (V1.1)
-- Centralized error handler
-- Custom `AppError` for operational errors
-- `asyncErrorHandler` for async controllers
-- No try/catch in controllers
-- Consistent error response format
+Pagination (page, limit)
 
----
+Server-side filtering:
 
-## Environment Variables
+category
 
+low stock items
+
+expiring items (N days)
+
+Server-side sorting (controlled allow-list)
+
+Defensive defaults and limits
+
+Inventory Analytics (Admin Only)
+
+Total inventory count
+
+Low stock item count
+
+Expiring soon item count
+
+Category-wise inventory breakdown
+
+Implemented using aggregation pipelines
+
+Endpoint:
+
+GET /api/inventory/analytics
+
+Authentication & Authorization
+
+JWT-based login
+
+Short-lived access tokens
+
+Protected routes
+
+Admin-only and volunteer-level permissions
+
+Role-aware error responses
+
+Global Error Handling
+
+Centralized global error handler
+
+Custom AppError for operational errors
+
+Async error wrapper for controllers
+
+Consistent error response format
+
+No try/catch blocks inside controllers
+
+Environment Variables
 PORT=3000
-MONGO_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/foodbank
+MONGO_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/<dbname>
 JWT_SECRET=your_secret
 JWT_EXPIRES_IN=15m
 
-yaml
-Copy code
+Testing
 
----
+Manual testing only (intentional)
 
-## Documentation
+All major flows verified:
 
-- README.md – Project overview
-- PROJECT_CONTEXT.md – Canonical system snapshot
-- DEBUGGING.md – Real bugs and fixes
-- docs/adr/ – Architectural decisions
+auth & authorization
 
----
+inventory CRUD
 
-## Testing
+pagination / filtering / sorting
 
-- Manual testing completed
-- All error paths verified
-- Auth, authorization, inventory, and global error flow validated
+analytics endpoint
 
----
+global error handling
 
-## Not Implemented Yet
+Real bugs documented in DEBUGGING.md
 
-- Audit logs
-- Automated tests
-- Frontend integration
-- Deployment
+Documentation
 
----
+README.md – Project overview
 
-## Status
+PROJECT_CONTEXT.md – Canonical snapshot of decisions
 
-✅ **Backend V1.1 Stable**  
-Ready for frontend integration.
+Not Implemented Yet (Intentional)
+
+Audit logging
+
+Automated tests
+
+Frontend integration
+
+Deployment
+
+TypeScript migration
+
+Status
+
+✅ Backend V1.2 Stable

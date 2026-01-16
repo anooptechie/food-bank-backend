@@ -1,160 +1,273 @@
-# PROJECT_CONTEXT.md
+PROJECT_CONTEXT.md
+Project Name
 
-## Project Name
-Local NGO / Food Bank Management System (Backend)
+Inventory / Resource Management System (Backend)
 
----
+Purpose
 
-## Purpose
-
-This document is the **canonical snapshot** of the backend.
+This document is the canonical snapshot of the backend.
 
 It captures:
-- stable facts
-- final architectural decisions
-- verified system behavior
+
+stable facts
+
+final architectural decisions
+
+verified system behavior
 
 It intentionally excludes:
-- debugging steps
-- experiments
-- rationale (documented separately in ADRs)
 
----
+debugging steps
 
-## Project Scope
+experiments
 
-A backend system for managing donated food inventory for old age homes / local NGOs, with emphasis on:
-- data safety
-- predictable behavior
-- role-based access control
-- centralized error handling
+Project Scope
 
-Frontend is **not yet implemented**.
+A domain-flexible backend system for managing inventory or shared resources across different organizations and use cases.
 
----
+The system is designed to support:
 
-## Tech Stack (Frozen – V1.1)
+safe and controlled inventory updates
 
-- Node.js
-- Express.js
-- MongoDB Atlas
-- Mongoose
-- JWT (short-lived access tokens)
-- Git & GitHub
+role-based access and permissions
 
----
+operational visibility via analytics
 
-## Architecture
+predictable and consistent error handling
 
-- Layered architecture:
-  Routes → Middleware → Controllers → Models → Database
-- Authentication & authorization enforced via middleware
-- Business rules enforced in controllers
-- No implicit ORM-side updates
-- Centralized error handling via global error middleware
+scalable read and write patterns
 
----
+The initial use case was NGO / food bank inventory management, but no domain-specific assumptions exist in the core logic.
 
-## Core Domain Models
+Frontend is not yet implemented.
 
-### Inventory Item
+Tech Stack (Frozen – V1.2)
+
+Node.js
+
+Express.js
+
+MongoDB Atlas
+
+Mongoose
+
+JWT (short-lived access tokens)
+
+Git & GitHub
+
+Architecture
+
+Layered architecture:
+
+Routes → Middleware → Controllers → Models → Database
+
+
+Authentication and authorization enforced via middleware
+
+Business rules enforced explicitly in controllers
+
+No implicit ORM-side updates
+
+Centralized error handling via global error middleware
+
+Query middleware used for enforcing soft-delete behavior
+
+Core Domain Models
+Inventory Item
 
 Fields:
-- `name` (String, required)
-- `category` (String)
-- `quantity` (Number, required, ≥ 0)
-- `minThreshold` (Number, required, ≥ 0)
-- `expiryDate` (Date, required)
-- `isDeleted` (Boolean, default: false)
-- `deletedAt` (Date, optional)
-- `createdAt`, `updatedAt` (timestamps)
 
----
+name (String, required)
 
-### User
+category (String)
+
+quantity (Number, required, ≥ 0)
+
+minThreshold (Number, required, ≥ 0)
+
+expiryDate (Date, required)
+
+isDeleted (Boolean, default: false)
+
+deletedAt (Date, optional)
+
+createdAt, updatedAt (timestamps)
+
+User
 
 Fields:
-- `name` (String, required)
-- `email` (String, unique, required)
-- `password` (String, hashed, never returned)
-- `role` (Enum: `admin`, `volunteer`)
-- `isActive` (Boolean)
-- `createdAt`, `updatedAt` (timestamps)
 
----
+name (String, required)
 
-## Authentication
+email (String, unique, required)
 
-- JWT-based authentication
-- Short-lived access tokens
-- Stateless authentication model
-- Tokens required for all protected routes
-- Token payload contains only `userId`
+password (String, hashed, never returned)
 
----
+role (Enum: admin, volunteer)
 
-## Authorization
+isActive (Boolean)
 
-### Roles
+createdAt, updatedAt (timestamps)
 
-**Admin**
-- Create inventory items
-- Soft delete inventory items
-- Create volunteer users
-- Update all allowed inventory fields
+Authentication
 
-**Volunteer**
-- View inventory alerts
-- Update inventory quantity only
+JWT-based authentication
 
-### Enforcement
+Short-lived access tokens
 
-- Route-level authorization via `restrictTo`
-- Field-level authorization enforced inside controllers
-- Deny-by-default update strategy
+Stateless authentication model
 
----
+Tokens required for all protected routes
 
-## Inventory Operations
+Token payload contains only userId
 
-### Create Inventory Item
-- `POST /api/inventory`
-- Admin only
+Authorization
+Roles
 
-### Update Inventory Item
-- `PATCH /api/inventory/:id`
-- Role-based field allow-list:
-  - Admin: `quantity`, `minThreshold`, `expiryDate`
-  - Volunteer: `quantity`
-- Forbidden fields ignored if at least one valid field exists
-- Request rejected if **only forbidden fields** are provided
+Admin
 
-### Delete Inventory Item
-- `DELETE /api/inventory/:id`
-- Soft delete (`isDeleted = true`)
+Create inventory items
 
-### Alerts
-- Low stock alerts: `GET /api/inventory/alerts`
-- Expiring items (next 7 days): `GET /api/inventory/expiring`
+Soft delete inventory items
 
----
+Create volunteer users
 
-## Soft Delete Strategy
+Update all allowed inventory fields
 
-- Inventory items are never physically removed
-- Deleted items:
-  - cannot be updated
-  - are excluded from all queries
-- Enforced via query middleware + controller filters
+Access inventory analytics
 
----
+Volunteer
 
-## Global Error Handling (V1.1)
+View inventory
 
-- Centralized global error handler
-- Controllers never send error responses directly
-- All expected errors use `AppError`
-- All async controllers wrapped with `asyncErrorHandler`
-- Errors propagate exclusively via `next(err)`
+View inventory alerts
 
+Update inventory quantity only
 
+Enforcement
+
+Route-level authorization via restrictTo
+
+Field-level authorization enforced inside controllers
+
+Deny-by-default update strategy
+
+Role-aware error messages
+
+Inventory Operations
+List Inventory Items
+
+GET /api/inventory
+
+Supports:
+
+pagination (page, limit)
+
+filtering (category, low stock, expiring items)
+
+sorting (controlled allow-list)
+
+Create Inventory Item
+
+POST /api/inventory
+
+Admin only
+
+Update Inventory Item
+
+PATCH /api/inventory/:id
+
+Role-based field allow-list:
+
+Admin: quantity, minThreshold, expiryDate
+
+Volunteer: quantity
+
+Forbidden fields ignored if at least one valid field exists
+
+Request rejected if only forbidden fields are provided
+
+Delete Inventory Item
+
+DELETE /api/inventory/:id
+
+Soft delete (isDeleted = true)
+
+Inventory Analytics (Admin Only)
+
+GET /api/inventory/analytics
+
+Provides aggregated operational insights:
+
+total inventory item count
+
+low stock item count
+
+expiring-soon item count (next 7 days)
+
+category-wise inventory breakdown
+
+Implemented using aggregation queries
+
+Alerts
+
+Low stock alerts:
+
+Quantity below minimum threshold
+
+Expiring items alerts:
+
+Items expiring within the next 7 days
+
+Soft Delete Strategy
+
+Inventory items are never physically removed
+
+Deleted items:
+
+cannot be updated
+
+are excluded from all queries
+
+Enforced via query middleware and controller-level guards
+
+Global Error Handling (V1.2)
+
+Centralized global error handler
+
+Controllers never send error responses directly
+
+All expected errors use AppError
+
+All async controllers wrapped with asyncErrorHandler
+
+Errors propagate exclusively via next(err)
+
+Consistent error response format across the API
+
+Testing Strategy
+
+Manual testing only (intentional)
+
+Verified flows:
+
+authentication and authorization
+
+inventory CRUD
+
+pagination, filtering, and sorting
+
+analytics endpoints
+
+global error handling
+
+Real-world bugs and fixes documented in DEBUGGING.md
+
+Status
+
+✅ Backend V1.2 Stable
+
+Notes
+
+This project is intentionally backend-first.
+Deployment, audit logging, and automated tests are deferred to later phases.
