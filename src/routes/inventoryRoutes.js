@@ -40,4 +40,5 @@ router.delete(
   inventoryController.softDeleteInventoryItem
 );
 
+router.get("/analytics", restrictTo("admin"), inventoryController.getInventoryAnalytics)
 module.exports = router;

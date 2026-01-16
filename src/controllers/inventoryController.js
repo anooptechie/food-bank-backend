@@ -388,3 +388,38 @@ exports.getAllInventoryItems = asyncErrorHandler(async (req, res, next) => {
     },
   });
 });
+
+exports.getInventoryAnalytics = asyncErrorHandler(async (req, res, next) => {
+  const totalItems = await InventoryItem.countDocuments();
+
+  const lowStockItems = await InventoryItem.countDocuments({
+    $expr: { $lt: ["$quantity", "$minThreshold"] },
+  });
+
+  const today = new Date();
+  const next7Days = new Date();
+  next7Days.setDate(today.getDate() + 7);
+
+  const expiringSoonItems = await InventoryItem.countDocuments({
+    expiryDate: { $lte: next7Days },
+  });
+
+  const categoryBreakdown = await InventoryItem.aggregate([
+    {
+      $group: {
+        _id: "$category",
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      totalItems,
+      lowStockItems,
+      expiringSoonItems,
+      categoryBreakdown,
+    },
+  });
+});
