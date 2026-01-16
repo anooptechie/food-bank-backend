@@ -183,7 +183,6 @@ const AppError = require("../utils/appError");
 //   }
 // });
 
-
 exports.testInventory = asyncErrorHandler(async (req, res) => {
   res.json({
     status: "success",
@@ -308,3 +307,84 @@ exports.softDeleteInventoryItem = asyncErrorHandler(async (req, res, next) => {
   });
 });
 
+// exports.getAllInventory = asyncErrorHandler(async (req, res, next) => {
+//   // 1. Fetch all items from the database
+//   const items = await InventoryItem.find();
+
+//   // 2. Send the response in the format your React app expects
+//   res.status(200).json({
+//     status: "success",
+//     results: items.length,
+//     data: {
+//       items: items // This matches data.items in your Inventory.jsx
+//     }
+//   });
+// });
+
+exports.getAllInventoryItems = asyncErrorHandler(async (req, res, next) => {
+  /* ---------------- Pagination ---------------- */
+  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+  const limit = Math.min(parseInt(req.query.limit, 10) || 10, 100);
+  const skip = (page - 1) * limit;
+
+  /* ---------------- Filtering ---------------- */
+  const filter = {};
+
+  if (req.query.category) {
+    filter.category = req.query.category;
+  }
+
+  if (req.query.lowStock === "true") {
+    filter.$expr = { $lt: ["$quantity", "$minThreshold"] };
+  }
+
+  if (req.query.expiringIn) {
+    const days = parseInt(req.query.expiringIn, 10);
+
+    if (!isNaN(days)) {
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + days);
+
+      filter.expiryDate = { $lte: futureDate };
+    }
+  }
+
+  /* ---------------- Sorting ---------------- */
+  const allowedSortFields = [
+    "createdAt",
+    "expiryDate",
+    "quantity",
+    "name",
+    "category",
+  ];
+
+  let sort = { createdAt: -1 }; // default
+
+  if (req.query.sort) {
+    const sortField = req.query.sort.startsWith("-")
+      ? req.query.sort.slice(1)
+      : req.query.sort;
+
+    if (allowedSortFields.includes(sortField)) {
+      sort = req.query.sort.startsWith("-")
+        ? { [sortField]: -1 }
+        : { [sortField]: 1 };
+    }
+  }
+
+  // ---------------- Query ---------------- //
+  const items = await InventoryItem.find(filter)
+    .sort(sort)
+    .skip(skip)
+    .limit(limit);
+
+  res.status(200).json({
+    status: "success",
+    results: items.length,
+    data: {
+      items,
+      page,
+      limit,
+    },
+  });
+});

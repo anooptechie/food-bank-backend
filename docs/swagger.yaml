@@ -1,0 +1,145 @@
+openapi: 3.0.0
+info:
+  title: NGO Food Bank Management System
+  version: 1.1.0
+  description: |
+    Backend system for managing donated food inventory.
+    
+    **Instructions for Testing:**
+    1. Go to **Authentication > POST /auth/login** and execute with credentials.
+    2. Copy the `token` from the response.
+    3. Click the **Authorize** button at the top of this page.
+    4. Paste the token and click Authorize.
+  
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Enter your JWT token to access protected routes.
+
+  schemas:
+    InventoryItem:
+      type: object
+      required: [name, quantity, minThreshold, expiryDate]
+      properties:
+        name: { type: string, example: "Canned Beans" }
+        category: { type: string, example: "Proteins" }
+        quantity: { type: number, example: 50 }
+        minThreshold: { type: number, example: 10 }
+        expiryDate: { type: string, format: date-time, example: "2025-12-31T23:59:59Z" }
+
+paths:
+  # --- AUTHENTICATION ---
+  /auth/login:
+    post:
+      summary: Login to get a JWT token
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, example: "admin@example.com" }
+                password: { type: string, example: "password123" }
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: "success" }
+                  token: { type: string }
+
+  # --- INVENTORY ---
+  /inventory:
+    get:
+      summary: Get All Inventory
+      tags: [Inventory]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Success
+    post:
+      summary: Create Inventory Item (Admin Only)
+      tags: [Inventory]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InventoryItem'
+      responses:
+        201:
+          description: Created
+
+  /inventory/{id}:
+    patch:
+      summary: Update Inventory Item
+      tags: [Inventory]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                quantity: { type: number }
+                minThreshold: { type: number }
+                expiryDate: { type: string, format: date-time }
+      responses:
+        200:
+          description: Updated
+
+    delete:
+      summary: Soft Delete Item (Admin Only)
+      tags: [Inventory]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        204:
+          description: Deleted
+
+  /inventory/alerts:
+    get:
+      summary: View Low Stock Alerts
+      tags: [Alerts]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Success
+
+  /inventory/expiring:
+    get:
+      summary: View Expiring Items
+      tags: [Alerts]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Success

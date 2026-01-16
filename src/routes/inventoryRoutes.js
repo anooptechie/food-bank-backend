@@ -17,6 +17,8 @@ router.get("/alerts", inventoryController.getLowStockItems);
 
 router.get("/expiring", inventoryController.getExpiringItems);
 
+router.get("/", inventoryController.getAllInventoryItems)
+
 router.post(
   "/",
   restrictTo("admin"),
