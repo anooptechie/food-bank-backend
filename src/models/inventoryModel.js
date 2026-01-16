@@ -42,7 +42,7 @@ const itemSchema = new mongoose.Schema(
   }
 );
 
-//QUERY MIDDLEWARE for isDeleted in softDeleteInventoryItem controller
+//QUERY MIDDLEWARE for isDeleted in softDeleteInventoryItem controller (Soft-delete)
 itemSchema.pre(/^find/, function (next) {
   this.where({ isDeleted: { $ne: true } });
   // next()

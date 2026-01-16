@@ -21,17 +21,21 @@ const app = express();
 app.use(express.json());
 app.use(cors())
 
+// Swagger UI
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
+//Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/inventory", inventoryRoutes); //route mounting
 app.use("/api/users", userRoutes);
+
 
 // Test route
 app.get("/", (req, res) => {
   res.send("Food Bank API is running");
 });
 
+//Global Error Handler
 app.use(globalErrorHandler);
 
 module.exports = app;
