@@ -192,15 +192,60 @@ Routes → Middleware → Controllers → Models → Database
 
 ## Testing Strategy
 
-- Manual testing only
-- Verified:
-- auth & authorization
-- inventory CRUD
-- pagination, filtering, sorting
-- analytics
-- background jobs
+## Auth Regression Protection
+
+The system includes a **minimal regression test suite** to guard critical authentication and authorization behavior.
+
+These tests intentionally focus only on **security-critical invariants**, not full feature coverage.
+
+### Protected Guarantees
+
+- Passwords are always hashed before persistence
+- Login works end-to-end using real credentials and JWT issuance
+- Protected routes reject requests without valid tokens
+- Role-based access control is enforced (`admin` vs `volunteer`)
+- Volunteers cannot perform admin-only actions (e.g. user creation)
+
+## Testing Strategy
+
+### Auth Regression Protection
+
+The system includes a **minimal regression test suite** to guard critical authentication and authorization behavior.
+
+These tests intentionally focus only on **security-critical invariants**, not full feature coverage.
+
+#### Protected Guarantees
+
+- Passwords are always hashed before persistence
+- Login works end-to-end using real credentials and JWT issuance
+- Protected routes reject requests without valid tokens
+- Role-based access control is enforced (`admin` vs `volunteer`)
+- Volunteers cannot perform admin-only actions (e.g. user creation)
+
+#### Testing Approach
+
+- Uses Jest + Supertest
+- Tests run against an isolated test database
+- No mocking of authentication or authorization layers
+- Tokens are obtained via real login flows (no manual signing)
+- Database lifecycle is managed explicitly for deterministic runs
+
+This suite acts as a **trip-wire**: if any auth behavior regresses, tests fail immediately.
+
+---
+
+### Manual Verification (Intentional)
+
+In addition to automated auth regression tests, the system has been manually verified for:
+
+- authentication & authorization flows
+- inventory CRUD operations
+- pagination, filtering, and sorting
+- analytics correctness
+- background job execution
 - soft-delete edge cases
-- health endpoint
+- health endpoint behavior
+
 
 ---
 

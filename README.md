@@ -161,7 +161,10 @@ JWT_EXPIRES_IN=15m
 
 ## Testing
 
-- Manual testing only (intentional)
+### Auth Regression Tests
+A minimal Jest + Supertest suite protects authentication and authorization invariants, including password hashing, role enforcement, and protected routes.
+
+- Manual testing (intentional)
 - Verified flows:
   - authentication & authorization
   - inventory CRUD
