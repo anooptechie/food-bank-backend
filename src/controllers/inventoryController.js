@@ -1,6 +1,8 @@
 const InventoryItem = require("../models/inventoryModel");
 const asyncErrorHandler = require("../utils/asyncError");
 const AppError = require("../utils/appError");
+const emitAuditEvent = require("../audit/auditEmitter");
+const { INVENTORY_UPDATED } = require("../audit/auditEvent.types");
 
 // exports.testInventory = asyncErrorHandler(async (req, res) => {
 //   res.json({
@@ -255,27 +257,57 @@ exports.updateInventoryItem = asyncErrorHandler(async (req, res, next) => {
     }
   });
 
-  if (Object.keys(updates).length === 0) {
-    const message =
-      role === "admin"
-        ? "Only quantity, minThreshold, or expiryDate can be updated"
-        : "Only quantity can be updated";
-
-    return next(new AppError(message, 400));
+  if (!Object.keys(updates).length) {
+    return next(
+      new AppError(
+        role === "admin"
+          ? "Only quantity, minThreshold, or expiryDate can be updated"
+          : "Only quantity can be updated",
+        400,
+      ),
+    );
   }
 
+  // ✅ Fetch previous state BEFORE update (critical for audit)
+  const existingItem = await InventoryItem.findOne({
+    _id: req.params.id,
+    isDeleted: false,
+  });
+
+  if (!existingItem) {
+    return next(new AppError("Inventory item not found", 404));
+  }
+
+  // ✅ Perform update
   const updatedItem = await InventoryItem.findOneAndUpdate(
     { _id: req.params.id, isDeleted: false },
     updates,
     {
       new: true,
       runValidators: true,
-    }
+    },
   );
 
-  if (!updatedItem) {
-    return next(new AppError("Inventory item not found", 404));
-  }
+  // ✅ Emit audit event AFTER successful mutation
+  emitAuditEvent({
+    actorId: req.user.id,
+    action: INVENTORY_UPDATED,
+    resourceType: "InventoryItem",
+    resourceId: updatedItem._id,
+    metadata: {
+      updatedFields: Object.keys(updates),
+      before: {
+        quantity: existingItem.quantity,
+        minThreshold: existingItem.minThreshold,
+        expiryDate: existingItem.expiryDate,
+      },
+      after: {
+        quantity: updatedItem.quantity,
+        minThreshold: updatedItem.minThreshold,
+        expiryDate: updatedItem.expiryDate,
+      },
+    },
+  });
 
   res.status(200).json({
     status: "success",
@@ -292,12 +324,12 @@ exports.softDeleteInventoryItem = asyncErrorHandler(async (req, res, next) => {
       isDeleted: true,
       deletedAt: new Date(),
     },
-    { new: true }
+    { new: true },
   );
 
   if (!item) {
     return next(
-      new AppError("Inventory item not found or already deleted", 404)
+      new AppError("Inventory item not found or already deleted", 404),
     );
   }
 

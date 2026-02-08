@@ -73,6 +73,17 @@ All future changes, refactors, and feature additions must preserve these guarant
 
 ---
 
+### Audit Emission Invariant
+
+Any successful inventory UPDATE must emit exactly one audit event
+containing accurate before and after state.
+
+- Audit events must never be emitted on failed requests
+- Audit events must reflect actual persisted state, not intent
+- Audit logic must not block or affect request success
+
+---
+
 ## Enforcement
 
 - Some invariants are enforced by automated tests.

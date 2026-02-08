@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 const User = require("../src/models/userModel");
 require("dotenv").config();
 
@@ -6,28 +7,32 @@ const createAdmin = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
 
+    // 1. Double check it's really gone
     const adminExists = await User.findOne({ email: "admin@example.com" });
     if (adminExists) {
-      console.log("Admin already exists");
+      console.log("Admin still exists! Run the delete command again.");
       process.exit();
     }
 
-    const admin = await User.create({
-      name: "Admin",
-      email: "admin@example.com",
-      password: "password123",
-      role: "admin",
-    });
+    // 2. Manually hash the password here
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash("password123", saltRounds);
 
-    console.log("Admin created successfully:");
-    console.log({
-      email: admin.email,
-      role: admin.role,
-    });
+    // 3. Use insertMany to bypass the pre-save hook in userModel.js
+    // This prevents the "Double Hashing" issue.
+    await User.insertMany([
+      {
+        name: "Admin",
+        email: "admin@example.com",
+        password: hashedPassword,
+        role: "admin",
+      },
+    ]);
 
+    console.log("Admin created successfully with a clean hash.");
     process.exit();
   } catch (error) {
-    console.error(error);
+    console.error("❌ Error seeding admin:", error);
     process.exit(1);
   }
 };

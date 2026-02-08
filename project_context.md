@@ -253,3 +253,41 @@ In addition to automated auth regression tests, the system has been manually ver
 
 ✅ **Backend V1.2 Stable**  
 Phase 1 complete.
+
+## Phase 2 — Audit Event Emission (Locked)
+
+### Goal
+Ensure that critical business actions emit reliable, factual audit events
+without coupling this service to audit storage or querying.
+
+### Scope
+- This service **emits audit events only**
+- No audit data is stored or queried here
+- This service acts strictly as an **event producer**
+
+### Implemented
+- Inventory item **UPDATE** emits an audit event
+- Event is emitted **only after successful mutation**
+- Event contains:
+  - actorId (from authenticated user)
+  - action type
+  - resource type and ID
+  - before and after state
+  - timestamp
+
+### Explicit Non-Goals
+- No audit event storage
+- No audit APIs
+- No CREATE or DELETE audit events (deferred intentionally)
+- No external audit service integration
+
+### Rationale
+Inventory UPDATE was chosen because it is the most complex case
+(before/after state, role-based permissions, conditional updates).
+Once UPDATE is proven correct, CREATE and DELETE become mechanical extensions.
+
+### Status
+Phase 2 is complete, manually verified, and locked.
+Future audit expansion will occur in a separate phase.
+
+

@@ -11,6 +11,7 @@ The project focuses on **core backend engineering concerns** such as authorizati
 Inventory and resource tracking is a common backend problem across many domains.
 
 This project focuses on solving **backend-level challenges** that appear in most inventory systems:
+
 - enforcing access control at the API level
 - preventing unsafe or partial updates
 - maintaining consistent state with soft deletes
@@ -24,18 +25,21 @@ The goal is not to model a single domain, but to build a **reusable backend foun
 ## Tech Stack (V1.2)
 
 ### Backend
+
 - Node.js
 - Express.js
 - MongoDB Atlas
 - Mongoose
 
 ### Authentication & Authorization
+
 - JWT (short-lived access tokens)
 - Stateless authentication
 - Role-based access control (`admin`, `volunteer`)
 - Field-level authorization inside controllers
 
 ### Tooling
+
 - dotenv
 - nodemon
 - Git & GitHub
@@ -73,6 +77,7 @@ src/
 ## Implemented Features
 
 ### Inventory Management
+
 - Create inventory items (admin only)
 - Safe PATCH updates using allow-list strategy
 - Field-level authorization based on role
@@ -82,6 +87,7 @@ src/
 ---
 
 ### Inventory Listing (Scalable APIs)
+
 - Pagination (`page`, `limit`)
 - Server-side filtering:
   - category
@@ -96,6 +102,7 @@ GET /api/inventory
 ---
 
 ### Inventory Analytics (Admin Only)
+
 - Total inventory item count
 - Low stock item count
 - Expiring-soon item count (next 7 days)
@@ -108,6 +115,7 @@ GET /api/inventory/analytics
 ---
 
 ### Background Jobs (Async Processing)
+
 - Cron-based background job using `node-cron`
 - Runs independently of HTTP requests
 - Daily checks for:
@@ -116,6 +124,7 @@ GET /api/inventory/analytics
 - Alerts currently logged (no email/SMS integration)
 
 Purpose:
+
 - Keeps request-response cycle lightweight
 - Demonstrates async backend workflows
 
@@ -124,6 +133,7 @@ Purpose:
 ### Operational Endpoints
 
 #### Health Check
+
 GET /health
 
 - Returns service status, uptime, and timestamp
@@ -133,6 +143,7 @@ GET /health
 ---
 
 ### Authentication & Authorization
+
 - JWT-based login
 - Short-lived access tokens
 - Protected routes
@@ -142,6 +153,7 @@ GET /health
 ---
 
 ### Global Error Handling
+
 - Centralized global error handler
 - Custom `AppError` class
 - Async controller wrapper
@@ -162,6 +174,7 @@ JWT_EXPIRES_IN=15m
 ## Testing
 
 ### Auth Regression Tests
+
 - A minimal Jest + Supertest suite protects authentication and authorization invariants, including password hashing, role enforcement, and protected routes.
 
 - Manual testing (intentional)
@@ -173,7 +186,6 @@ JWT_EXPIRES_IN=15m
   - background job execution
   - soft-delete edge cases
   - health check endpoint
-
 
 ---
 
@@ -193,6 +205,13 @@ JWT_EXPIRES_IN=15m
 Phase 1 completed: scalable APIs, analytics, background jobs, and operational hardening.
 
 ---
+
+## Phase 2 — Audit Event Emission
+
+### Audit Events
+
+This service emits audit events for selected business actions.
+Audit persistence and analysis are handled by a separate Audit Logging Service.
 
 ### Notes
 

@@ -12,9 +12,9 @@ const connectDB = require("./config/db");
 connectDB();
 
 // ❗ Do NOT start cron jobs during tests
-if (process.env.NODE_ENV !== "test") {
-  require("./jobs/inventoryAlertsJob");
-}
+// if (process.env.NODE_ENV !== "test") {
+//   require("./jobs/inventoryAlertsJob");
+// }
 
 const PORT = process.env.PORT || 3000;
 

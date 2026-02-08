@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const User = require("../models/userModel");
 const asyncErrorHandler = require("../utils/asyncError");
-const AppError = require("../utils/appError")
+const AppError = require("../utils/appError");
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -11,6 +11,7 @@ const signToken = (id) => {
 };
 
 exports.login = asyncErrorHandler(async (req, res, next) => {
+  console.log("LOGIN ATTEMPT:", req.body.email);
   const { email, password } = req.body;
 
   // 1. Check if email and password exist
@@ -20,6 +21,7 @@ exports.login = asyncErrorHandler(async (req, res, next) => {
 
   // 2. Find user and explicitly select password
   const user = await User.findOne({ email }).select("+password");
+  console.log("USER FOUND:", user ? user.email : "NONE");
 
   // 3. Check if user exists and password is correct
   if (!user || !(await user.correctPassword(password, user.password))) {
