@@ -84,6 +84,15 @@ containing accurate before and after state.
 
 ---
 
+### Background Job Execution Invariant
+
+Background jobs must never start implicitly.
+
+- All background jobs must be explicitly started by the server
+- Job execution must be gated by environment configuration
+- Jobs must be stopped during graceful shutdown
+- Background jobs must not run during tests unless explicitly enabled
+
 ## Enforcement
 
 - Some invariants are enforced by automated tests.

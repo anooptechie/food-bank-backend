@@ -290,4 +290,23 @@ Once UPDATE is proven correct, CREATE and DELETE become mechanical extensions.
 Phase 2 is complete, manually verified, and locked.
 Future audit expansion will occur in a separate phase.
 
+## Phase 3 — Operations (Locked)
+
+### Goal
+Ensure predictable and controllable background job behavior at the service level.
+
+### Implemented
+- Explicit start/stop control for inventory alert cron job
+- Environment-based enablement (`ENABLE_INVENTORY_ALERTS_JOB`)
+- Graceful shutdown handling (`SIGINT`, `SIGTERM`)
+
+### Explicit Non-Goals
+- No job queues or workers
+- No retries or persistence
+- No overlap with the Background Job Processing System project
+
+### Status
+Phase 3 is complete and locked.
+
+
 

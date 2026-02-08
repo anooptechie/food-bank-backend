@@ -4,12 +4,10 @@ const InventoryItem = require("../models/inventoryModel");
 const runInventoryAlertsJob = async () => {
   console.log("Running inventory alerts job...");
 
-  // Low stock items
   const lowStockItems = await InventoryItem.find({
     $expr: { $lt: ["$quantity", "$minThreshold"] },
   });
 
-  // Expiring items (next 7 days)
   const today = new Date();
   const next7Days = new Date();
   next7Days.setDate(today.getDate() + 7);
@@ -29,12 +27,37 @@ const runInventoryAlertsJob = async () => {
   console.log("Inventory alerts job completed.");
 };
 
-cron.schedule("*/1 * * * *", async () => {
-  try {
-    await runInventoryAlertsJob();
-  } catch (err) {
-    console.error("Inventory alerts job failed:", err.message);
-  }
-});
+// 🔑 STEP 1: lifecycle control
+let inventoryAlertsTask = null;
 
-module.exports = {};
+const startInventoryAlertsJob = () => {
+  if (inventoryAlertsTask) return;
+
+  inventoryAlertsTask = cron.schedule(
+    "*/1 * * * *",
+    async () => {
+      try {
+        await runInventoryAlertsJob();
+      } catch (err) {
+        console.error("Inventory alerts job failed:", err.message);
+      }
+    },
+    { scheduled: true }
+  );
+
+  console.log("Inventory alerts cron job started");
+};
+
+const stopInventoryAlertsJob = () => {
+  if (!inventoryAlertsTask) return;
+
+  inventoryAlertsTask.stop();
+  inventoryAlertsTask = null;
+
+  console.log("Inventory alerts cron job stopped");
+};
+
+module.exports = {
+  startInventoryAlertsJob,
+  stopInventoryAlertsJob,
+};

@@ -217,3 +217,30 @@ Audit persistence and analysis are handled by a separate Audit Logging Service.
 
 This project is intentionally backend-first.  
 All listed features reflect the current implementation exactly.
+
+## Phase 3 — Operations & Background Jobs
+
+Phase 3 focuses on making background job execution predictable,
+explicit, and safe at the service level.
+
+### What was implemented
+- Inventory alert job no longer starts implicitly on import
+- Explicit lifecycle control (`start` / `stop`) for background jobs
+- Environment-based enablement using `ENABLE_INVENTORY_ALERTS_JOB`
+- Graceful shutdown handling for clean process termination
+
+### How background jobs work
+- Background jobs run **only if explicitly enabled**
+- Jobs are started by the server at runtime, not on module load
+- Jobs are stopped cleanly on shutdown signals (`SIGINT`, `SIGTERM`)
+- No background jobs run during tests by default
+
+### Non-goals (intentional)
+- No job queues or workers
+- No retries or persistence
+- No overlap with the separate Background Job Processing System project
+
+This phase ensures operational correctness without introducing
+infrastructure complexity.
+
+
