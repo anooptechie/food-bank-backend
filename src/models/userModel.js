@@ -30,24 +30,28 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    refreshToken: {
+      type: String,
+      select: false,
+    },
   },
   {
     timestamps: true,
-  }
+  },
 );
+// Password Hashing
+userSchema.pre("save", async function () {
+  // Only run this function if password was modified
+  if (!this.isModified("password")) return;
 
-// Hash password before saving
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
-
+  // Hash the password
   this.password = await bcrypt.hash(this.password, 12);
-  // next();
 });
 
 // Password comparison
 userSchema.methods.correctPassword = async function (
   candidatePassword,
-  userPassword
+  userPassword,
 ) {
   return bcrypt.compare(candidatePassword, userPassword);
 };
