@@ -308,5 +308,45 @@ Ensure predictable and controllable background job behavior at the service level
 ### Status
 Phase 3 is complete and locked.
 
+## Phase 3 — Authentication Lifecycle (Locked)
+
+### Goal
+Introduce a secure and explicit session lifecycle while preserving
+stateless request authorization.
+
+### Scope
+- Short-lived access tokens for API access
+- Long-lived refresh tokens for session renewal
+- Refresh token rotation to prevent replay attacks
+- Explicit logout semantics
+
+### Implemented
+- Access tokens expire quickly and are never persisted
+- Refresh tokens are:
+  - stored on the user record
+  - single-use
+  - rotated on every refresh request
+- Refresh endpoint verifies:
+  - token signature
+  - token ownership (database match)
+- Logout invalidates the refresh token at the source of truth
+
+### Explicit Non-Goals
+- No cookie-based authentication
+- No refresh token reuse detection beyond rotation
+- No multi-device or multi-session support
+- No external identity providers
+- No token blacklist or cache layer
+
+### Security Invariants
+- Access tokens must never be long-lived
+- Refresh tokens must never access protected resources
+- Refresh tokens must be rotated on every use
+- Logout must invalidate the refresh token at the database level
+
+### Status
+Authentication lifecycle is complete, manually verified, and locked.
+
+
 
 

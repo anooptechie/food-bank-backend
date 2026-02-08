@@ -93,6 +93,21 @@ Background jobs must never start implicitly.
 - Jobs must be stopped during graceful shutdown
 - Background jobs must not run during tests unless explicitly enabled
 
+### Mongoose Hook Invariant
+
+Async Mongoose middleware must never use callback-style `next()`.
+
+- `async function ()` hooks must rely on implicit promise resolution
+- Callback-style hooks must not be marked `async`
+- Mixing the two can cause runtime errors that surface outside Express
+
+### Authentication Invariants
+
+- Access tokens must be short-lived and stateless
+- Refresh tokens must never access protected resources
+- Refresh tokens are single-use and rotated on every refresh
+- Logout invalidates the refresh token at the source of truth (DB)
+
 ## Enforcement
 
 - Some invariants are enforced by automated tests.

@@ -240,6 +240,42 @@ explicit, and safe at the service level.
 - No retries or persistence
 - No overlap with the separate Background Job Processing System project
 
+### Authentication — Phase 3 (Refresh Tokens)
+
+Phase 3 introduces a complete **session lifecycle** using refresh tokens,
+while keeping the backend stateless for request authorization.
+
+#### Implemented
+- Short-lived **access tokens** for protected routes
+- Long-lived **refresh tokens** for session renewal
+- Refresh tokens stored securely on the user record
+- Token **rotation** on every refresh request
+- Explicit logout support by invalidating refresh tokens
+
+#### Endpoints
+- `POST /api/auth/login`
+  - Issues an access token and a refresh token
+
+- `POST /api/auth/refresh`
+  - Accepts a refresh token
+  - Issues a new access token and a new refresh token
+  - Invalidates the previous refresh token
+
+- `POST /api/auth/logout`
+  - Invalidates the current refresh token
+
+#### Security Notes
+- Refresh tokens are never used to access protected resources
+- Refresh tokens are single-use and rotated on every refresh
+- Logout invalidates the session at the source of truth (database)
+
+#### Intentional Non-Goals
+- No cookies (header-based tokens only)
+- No Redis or token blacklists
+- No multi-device session support
+- No OAuth or third-party identity providers
+
+
 This phase ensures operational correctness without introducing
 infrastructure complexity.
 

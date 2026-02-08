@@ -48,3 +48,62 @@ exports.login = asyncErrorHandler(async (req, res, next) => {
     refreshToken,
   });
 });
+exports.refresh = asyncErrorHandler(async (req, res, next) => {
+  const { refreshToken } = req.body;
+
+  // 1️⃣ Refresh token must be provided
+  if (!refreshToken) {
+    return next(new AppError("Refresh token is required", 400));
+  }
+
+  let decoded;
+  try {
+    decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+  } catch (err) {
+    return next(new AppError("Invalid or expired refresh token", 401));
+  }
+
+  // 2️⃣ Find user with matching refresh token
+  const user = await User.findOne({
+    _id: decoded.id,
+    refreshToken,
+  });
+
+  if (!user) {
+    return next(new AppError("Refresh token not recognized", 401));
+  }
+
+  // 3️⃣ Rotate tokens
+  const newAccessToken = signAccessToken(user._id);
+  const newRefreshToken = signRefreshToken(user._id);
+
+  // 4️⃣ Persist new refresh token (rotation)
+  user.refreshToken = newRefreshToken;
+  await user.save({ validateBeforeSave: false });
+
+  // 5️⃣ Respond
+  res.status(200).json({
+    status: "success",
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
+  });
+});
+exports.logout = asyncErrorHandler(async (req, res, next) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return next(new AppError("Refresh token is required", 400));
+  }
+
+  const user = await User.findOne({ refreshToken });
+
+  if (user) {
+    user.refreshToken = undefined;
+    await user.save({ validateBeforeSave: false });
+  }
+
+  res.status(200).json({
+    status: "success",
+    message: "Logged out successfully",
+  });
+});
