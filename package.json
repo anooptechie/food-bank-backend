@@ -8,11 +8,11 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js"
   },
-
   "jest": {
-    "setupFilesAfterEnv": ["<rootDir>/tests/testSetup.js"]
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/testSetup.js"
+    ]
   },
-  
   "keywords": [],
   "author": "",
   "license": "ISC",

@@ -3,7 +3,11 @@ const bcrypt = require("bcryptjs");
 const User = require("../models/userModel");
 const asyncErrorHandler = require("../utils/asyncError");
 const AppError = require("../utils/appError");
-const { signAccessToken, signRefreshToken } = require("../utils/token");
+const {
+  signAccessToken,
+  signRefreshToken,
+  hashToken,
+} = require("../utils/token");
 
 // ⚠️ NOTE:
 // signToken is no longer used for login.
@@ -35,10 +39,10 @@ exports.login = asyncErrorHandler(async (req, res, next) => {
 
   // 4️⃣ Issue tokens
   const accessToken = signAccessToken(user._id);
-  const refreshToken = signRefreshToken(user._id);
+  const refreshToken = signRefreshToken(user._id, user.tokenVersion);
 
   // 5️⃣ Store refresh token on user
-  user.refreshToken = refreshToken;
+  user.refreshToken = hashToken(refreshToken);
   await user.save({ validateBeforeSave: false });
 
   // 6️⃣ Send response
@@ -48,6 +52,7 @@ exports.login = asyncErrorHandler(async (req, res, next) => {
     refreshToken,
   });
 });
+
 exports.refresh = asyncErrorHandler(async (req, res, next) => {
   const { refreshToken } = req.body;
 
@@ -63,31 +68,52 @@ exports.refresh = asyncErrorHandler(async (req, res, next) => {
     return next(new AppError("Invalid or expired refresh token", 401));
   }
 
-  // 2️⃣ Find user with matching refresh token
-  const user = await User.findOne({
-    _id: decoded.id,
-    refreshToken,
-  });
+  // 2️⃣ Hash incoming token
+  const hashedIncoming = hashToken(refreshToken);
 
+  // 3️⃣ Find user by ID and explicitly select refreshToken + tokenVersion
+  const user = await User.findById(decoded.id).select(
+    "+refreshToken +tokenVersion",
+  );
+
+  // 4️⃣ Validate user exists
   if (!user) {
-    return next(new AppError("Refresh token not recognized", 401));
+    return next(new AppError("User not found", 401));
   }
 
-  // 3️⃣ Rotate tokens
-  const newAccessToken = signAccessToken(user._id);
-  const newRefreshToken = signRefreshToken(user._id);
+  // 🔴 5️⃣ Reuse detection (token mismatch)
+  if (user.refreshToken !== hashedIncoming) {
+    user.tokenVersion += 1; // invalidate all sessions
+    user.refreshToken = undefined;
 
-  // 4️⃣ Persist new refresh token (rotation)
-  user.refreshToken = newRefreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    return next(
+      new AppError("Refresh token reuse detected. Session invalidated.", 401),
+    );
+  }
+
+  // 🔐 6️⃣ Token version check (prevents old tokens after rotation)
+  if (user.tokenVersion !== decoded.tokenVersion) {
+    return next(new AppError("Session invalidated. Please login again.", 401));
+  }
+
+  // 7️⃣ Rotate tokens
+  const newAccessToken = signAccessToken(user._id);
+  const newRefreshToken = signRefreshToken(user._id, user.tokenVersion);
+
+  // 8️⃣ Store hashed new refresh token
+  user.refreshToken = hashToken(newRefreshToken);
   await user.save({ validateBeforeSave: false });
 
-  // 5️⃣ Respond
+  // 9️⃣ Respond
   res.status(200).json({
     status: "success",
     accessToken: newAccessToken,
     refreshToken: newRefreshToken,
   });
 });
+
 exports.logout = asyncErrorHandler(async (req, res, next) => {
   const { refreshToken } = req.body;
 
@@ -95,7 +121,10 @@ exports.logout = asyncErrorHandler(async (req, res, next) => {
     return next(new AppError("Refresh token is required", 400));
   }
 
-  const user = await User.findOne({ refreshToken });
+  const { hashToken } = require("../utils/token");
+  const hashedIncoming = hashToken(refreshToken);
+
+  const user = await User.findOne({ refreshToken: hashedIncoming });
 
   if (user) {
     user.refreshToken = undefined;
