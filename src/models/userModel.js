@@ -45,6 +45,10 @@ const userSchema = new mongoose.Schema(
     lockUntil: {
       type: Date,
     },
+    permissions: {
+      type: [String],
+      default: [],
+    },
   },
   {
     timestamps: true,

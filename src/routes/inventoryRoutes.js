@@ -1,45 +1,71 @@
 const express = require("express");
 const router = express.Router();
+
 const inventoryController = require("../controllers/inventoryController");
 const {
   createInventoryValidator,
+  updateInventoryValidator,
   validate,
 } = require("../validators/inventoryValidator");
-const {
-  updateInventoryValidator,
-} = require("../validators/inventoryValidator");
-const { protect, restrictTo } = require("../middlewares/authMiddleware");
 
+const { protect, authorize } = require("../middlewares/authMiddleware");
+
+// 🔐 All routes protected
 router.use(protect);
+
+// 🧪 Test route
 router.get("/test", inventoryController.testInventory);
 
-router.get("/alerts", inventoryController.getLowStockItems);
+// 📦 Alerts
+router.get(
+  "/alerts",
+  authorize("read", "inventory"),
+  inventoryController.getLowStockItems,
+);
 
-router.get("/expiring", inventoryController.getExpiringItems);
+router.get(
+  "/expiring",
+  authorize("read", "inventory"),
+  inventoryController.getExpiringItems,
+);
 
-router.get("/", inventoryController.getAllInventoryItems)
+// 📄 Read inventory
+router.get(
+  "/",
+  authorize("read", "inventory"),
+  inventoryController.getAllInventoryItems,
+);
 
+// 📊 Analytics (IMPORTANT: keep before :id)
+router.get(
+  "/analytics",
+  authorize("analytics", "inventory"),
+  inventoryController.getInventoryAnalytics,
+);
+
+// ➕ Create inventory
 router.post(
   "/",
-  restrictTo("admin"),
+  authorize("create", "inventory"),
   createInventoryValidator,
   validate,
-  inventoryController.addItems
+  inventoryController.addItems,
 );
 
+// ✏️ Update inventory
 router.patch(
   "/:id",
+  authorize("update", "inventory"),
   updateInventoryValidator,
   validate,
-  inventoryController.updateInventoryItem
+  inventoryController.updateInventoryItem,
 );
 
+// ❌ Delete inventory
 router.delete(
   "/:id",
-  restrictTo("admin"),
-  inventoryController.softDeleteInventoryItem
+  authorize("delete", "inventory"),
+  inventoryController.softDeleteInventoryItem,
 );
-
-router.get("/analytics", restrictTo("admin"), inventoryController.getInventoryAnalytics)
 
 module.exports = router;
