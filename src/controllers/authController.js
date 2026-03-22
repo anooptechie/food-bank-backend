@@ -21,31 +21,69 @@ const signToken = (id) => {
 
 exports.login = asyncErrorHandler(async (req, res, next) => {
   console.log("LOGIN ATTEMPT:", req.body.email);
+
   const { email, password } = req.body;
 
-  // 1️⃣ Check if email and password exist
+  // 1️⃣ Validate input
   if (!email || !password) {
     return next(new AppError("Please provide email and password", 400));
   }
 
-  // 2️⃣ Find user and explicitly select password
+  // 2️⃣ Find user
   const user = await User.findOne({ email }).select("+password");
   console.log("USER FOUND:", user ? user.email : "NONE");
 
-  // 3️⃣ Check if user exists and password is correct
-  if (!user || !(await user.correctPassword(password, user.password))) {
+  // 3️⃣ If user doesn't exist
+  if (!user) {
     return next(new AppError("Incorrect email or password", 401));
   }
 
-  // 4️⃣ Issue tokens
+  // 🔓 Reset lock if expired
+  if (user.lockUntil && user.lockUntil <= Date.now()) {
+    user.loginAttempts = 0;
+    user.lockUntil = undefined;
+  }
+
+  // 🔐 Check if account is locked
+  if (user.lockUntil && user.lockUntil > Date.now()) {
+    return next(
+      new AppError(
+        "Account temporarily locked due to too many failed login attempts. Please try again later.",
+        403,
+      ),
+    );
+  }
+
+  // 4️⃣ Check password
+  const isPasswordCorrect = await user.correctPassword(password, user.password);
+
+  if (!isPasswordCorrect) {
+    user.loginAttempts += 1;
+
+    // 🔴 Lock account after 5 failed attempts
+    if (user.loginAttempts >= 5) {
+      user.lockUntil = Date.now() + 15 * 60 * 1000; // 15 minutes
+    }
+
+    await user.save({ validateBeforeSave: false });
+
+    return next(new AppError("Incorrect email or password", 401));
+  }
+
+  // ✅ Successful login → reset attempts
+  user.loginAttempts = 0;
+  user.lockUntil = undefined;
+
+  // 5️⃣ Issue tokens
   const accessToken = signAccessToken(user._id);
   const refreshToken = signRefreshToken(user._id, user.tokenVersion);
 
-  // 5️⃣ Store refresh token on user
+  // 6️⃣ Store hashed refresh token
   user.refreshToken = hashToken(refreshToken);
+
   await user.save({ validateBeforeSave: false });
 
-  // 6️⃣ Send response
+  // 7️⃣ Respond
   res.status(200).json({
     status: "success",
     accessToken,

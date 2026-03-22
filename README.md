@@ -279,4 +279,43 @@ while keeping the backend stateless for request authorization.
 This phase ensures operational correctness without introducing
 infrastructure complexity.
 
+### Authentication & Authorization
+
+#### Authentication (Hardened)
+
+- Short-lived **access tokens (JWT)**
+- Long-lived **refresh tokens with rotation**
+- Refresh tokens are:
+  - hashed before storage (SHA-256)
+  - single-use and rotated on every refresh
+- **Refresh token reuse detection** using `tokenVersion`
+- **Session invalidation** on suspected token compromise
+- Explicit **logout support**
+
+#### Abuse Protection
+
+- **Rate limiting**
+  - Strict limits on `/login`
+  - Controlled limits on `/refresh`
+
+- **Account lockout**
+  - Locks account after 5 failed login attempts
+  - Lock duration: 15 minutes
+  - Automatic reset after successful login or expiry
+
+#### Authorization
+
+- Role-based access control (`admin`, `volunteer`)
+- Field-level authorization inside controllers
+- Deny-by-default update strategy
+
+Phase 1 — Auth Hardening Complete
+
+Includes:
+- refresh token hashing and rotation
+- token reuse detection
+- session invalidation via tokenVersion
+- rate limiting
+- account lockout
+
 
