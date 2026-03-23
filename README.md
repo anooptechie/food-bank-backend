@@ -309,7 +309,7 @@ infrastructure complexity.
 - Field-level authorization inside controllers
 - Deny-by-default update strategy
 
-Phase 1 — Auth Hardening Complete
+Auth Hardening Complete
 
 Includes:
 - refresh token hashing and rotation
@@ -318,4 +318,32 @@ Includes:
 - rate limiting
 - account lockout
 
+Business Logic Reliability (Locked)
 
+Concurrency Safety (Critical Write Operations)
+> Atomic inventory updates using MongoDB $inc
+> Prevents race conditions under concurrent requests
+> Guards against negative inventory values using conditional queries
+> Separate operational endpoints:
+> PATCH /api/inventory/:id/increment
+> PATCH /api/inventory/:id/decrement
+
+Validation Layer
+> Request validation using express-validator
+> Centralized validation logic in dedicated validator layer
+> Controllers remain free of validation concerns
+> Ensures only valid data reaches business logic
+
+Service Layer (Domain Layer)
+> Business logic extracted into service layer (services/)
+> Controllers act as thin HTTP handlers
+> Centralized enforcement of domain rules
+> Improved maintainability and scalability
+
+Idempotency (Safe Retry Mechanism)
+> Idempotent operations for critical endpoints (increment/decrement)
+> Supports safe retries using Idempotency-Key header
+> Prevents duplicate updates caused by:
+> network retries
+> client resubmissions
+> Responses cached in MongoDB with TTL-based cleanup

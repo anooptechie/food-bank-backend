@@ -3,6 +3,7 @@ const asyncErrorHandler = require("../utils/asyncError");
 const AppError = require("../utils/appError");
 const emitAuditEvent = require("../audit/auditEmitter");
 const { INVENTORY_UPDATED } = require("../audit/auditEvent.types");
+const inventoryService = require("../services/inventoryService");
 
 // exports.testInventory = asyncErrorHandler(async (req, res) => {
 //   res.json({
@@ -268,46 +269,12 @@ exports.updateInventoryItem = asyncErrorHandler(async (req, res, next) => {
     );
   }
 
-  // ✅ Fetch previous state BEFORE update (critical for audit)
-  const existingItem = await InventoryItem.findOne({
-    _id: req.params.id,
-    isDeleted: false,
-  });
-
-  if (!existingItem) {
-    return next(new AppError("Inventory item not found", 404));
-  }
-
-  // ✅ Perform update
-  const updatedItem = await InventoryItem.findOneAndUpdate(
-    { _id: req.params.id, isDeleted: false },
+  // 🔥 Call service instead of DB logic
+  const updatedItem = await inventoryService.updateItem(
+    req.params.id,
     updates,
-    {
-      new: true,
-      runValidators: true,
-    },
+    req.user.id,
   );
-
-  // ✅ Emit audit event AFTER successful mutation
-  emitAuditEvent({
-    actorId: req.user.id,
-    action: INVENTORY_UPDATED,
-    resourceType: "InventoryItem",
-    resourceId: updatedItem._id,
-    metadata: {
-      updatedFields: Object.keys(updates),
-      before: {
-        quantity: existingItem.quantity,
-        minThreshold: existingItem.minThreshold,
-        expiryDate: existingItem.expiryDate,
-      },
-      after: {
-        quantity: updatedItem.quantity,
-        minThreshold: updatedItem.minThreshold,
-        expiryDate: updatedItem.expiryDate,
-      },
-    },
-  });
 
   res.status(200).json({
     status: "success",
@@ -318,42 +285,13 @@ exports.updateInventoryItem = asyncErrorHandler(async (req, res, next) => {
 });
 
 exports.incrementInventory = asyncErrorHandler(async (req, res, next) => {
-  console.log("🟢 Increment request received");
+  const amount = req.body.amount;
 
-  const amount = req.body?.amount;
-
-  // 1️⃣ Validate input
-  // if (!amount || amount <= 0) {
-  //   return next(new AppError("Invalid increment amount", 400));
-  // }
-
-  // console.log("STEP 1: Valid amount →", amount);
-
-  // 2️⃣ Atomic increment
-  const updatedItem = await InventoryItem.findOneAndUpdate(
-    {
-      _id: req.params.id,
-      isDeleted: false,
-    },
-    {
-      $inc: { quantity: amount }, // 🔥 atomic increase
-    },
-    {
-      new: true,
-    },
+  const updatedItem = await inventoryService.incrementItem(
+    req.params.id,
+    amount,
   );
 
-  console.log("STEP 2: DB operation completed");
-
-  // 3️⃣ Handle not found
-  if (!updatedItem) {
-    console.log("❌ Item not found");
-    return next(new AppError("Inventory item not found", 404));
-  }
-
-  console.log("STEP 3: Success → New quantity:", updatedItem.quantity);
-
-  // 4️⃣ Response
   res.status(200).json({
     status: "success",
     data: {
@@ -363,43 +301,13 @@ exports.incrementInventory = asyncErrorHandler(async (req, res, next) => {
 });
 
 exports.decrementInventory = asyncErrorHandler(async (req, res, next) => {
-  console.log("🔵 Decrement request received");
+  const amount = req.body.amount;
 
-  const { amount } = req.body;
-
-  // 1️⃣ Validate input
-  // if (!amount || amount <= 0) {
-  //   return next(new AppError("Invalid decrement amount", 400));
-  // }
-
-  // console.log("STEP 1: Valid amount →", amount);
-
-  // 2️⃣ Atomic update
-  const updatedItem = await InventoryItem.findOneAndUpdate(
-    {
-      _id: req.params.id,
-      isDeleted: false,
-      quantity: { $gte: amount }, // 🔴 prevent negative
-    },
-    {
-      $inc: { quantity: -amount }, // 🔥 atomic operation
-    },
-    {
-      new: true,
-    },
+  const updatedItem = await inventoryService.decrementItem(
+    req.params.id,
+    amount,
   );
 
-  console.log("STEP 2: DB operation completed");
-
-  // 3️⃣ Handle failure
-  if (!updatedItem) {
-    console.log("❌ Insufficient stock or item not found");
-    return next(new AppError("Insufficient stock or item not found", 400));
-  }
-
-  console.log("STEP 3: Success → New quantity:", updatedItem.quantity);
-
-  // 4️⃣ Respond
   res.status(200).json({
     status: "success",
     data: {

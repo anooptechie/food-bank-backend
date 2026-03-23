@@ -10,6 +10,9 @@ const {
 } = require("../validators/inventoryValidator");
 
 const { protect, authorize } = require("../middlewares/authMiddleware");
+const {
+  idempotencyMiddleware,
+} = require("../middlewares/idempotencyMiddleware");
 
 // 🔐 All routes protected
 router.use(protect);
@@ -66,6 +69,7 @@ router.patch(
   "/:id/increment",
   protect,
   authorize("update", "inventory"),
+  idempotencyMiddleware,
   validateAmount,
   validate,
   inventoryController.incrementInventory,
@@ -75,6 +79,7 @@ router.patch(
   "/:id/decrement",
   protect,
   authorize("update", "inventory"),
+  idempotencyMiddleware,
   validateAmount,
   validate,
   inventoryController.decrementInventory,

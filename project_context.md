@@ -376,7 +376,7 @@ stateless request authorization.
 
 Authentication lifecycle is complete, manually verified, and locked.
 
-## Authentication (Phase 1 — Hardened)
+## Authentication (Phase 3 — Hardened)
 
 The system implements a **secure, defensive authentication model**
 with explicit session lifecycle management and abuse protection.
@@ -429,7 +429,7 @@ with explicit session lifecycle management and abuse protection.
 - Failed login attempts must be tracked and limited
 - Session compromise must result in invalidation
 
-Phase 1 — Auth Hardening Complete
+Phase 3 — Auth Hardening Complete
 
 Includes:
 - refresh token hashing and rotation
@@ -437,3 +437,49 @@ Includes:
 - session invalidation via tokenVersion
 - rate limiting
 - account lockout
+
+Phase 4 — Business Logic Reliability (Locked)
+Goal
+Ensure system correctness under real-world conditions such as:
+> concurrent updates
+> invalid input
+> duplicate requests (retries)
+
+Implemented
+> Concurrency Safety
+> Atomic inventory updates using MongoDB $inc
+> Conditional updates ($gte) prevent negative stock
+> Separate operational endpoints for stock mutations:
+> increment
+> decrement
+
+Validation Layer
+> Request validation using express-validator
+> Validation logic separated from controllers
+> Standardized error responses for invalid inputs
+
+Service Layer (Domain Layer)
+> Business logic centralized in service layer
+> Controllers act as request/response handlers only
+> Domain rules enforced consistently across operations
+> Audit events triggered from service layer after successful mutations
+
+Idempotency
+> Idempotent handling for critical write operations
+> Client-provided Idempotency-Key used for request deduplication
+> Responses stored and replayed for duplicate requests
+> TTL-based automatic cleanup of stored keys
+
+Key Guarantees
+> No race conditions during concurrent inventory updates
+> No invalid or negative stock states
+> Duplicate requests do not cause duplicate effects
+> Business rules enforced consistently across the system
+
+Explicit Non-Goals
+> No distributed locking
+> No external cache (e.g., Redis) for idempotency
+> No cross-service idempotency guarantees
+
+Status
+Phase 4 is complete, verified, and locked.
