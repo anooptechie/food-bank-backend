@@ -6,6 +6,7 @@ const {
   createInventoryValidator,
   updateInventoryValidator,
   validate,
+  validateAmount,
 } = require("../validators/inventoryValidator");
 
 const { protect, authorize } = require("../middlewares/authMiddleware");
@@ -59,6 +60,24 @@ router.patch(
   updateInventoryValidator,
   validate,
   inventoryController.updateInventoryItem,
+);
+
+router.patch(
+  "/:id/increment",
+  protect,
+  authorize("update", "inventory"),
+  validateAmount,
+  validate,
+  inventoryController.incrementInventory,
+);
+
+router.patch(
+  "/:id/decrement",
+  protect,
+  authorize("update", "inventory"),
+  validateAmount,
+  validate,
+  inventoryController.decrementInventory,
 );
 
 // ❌ Delete inventory

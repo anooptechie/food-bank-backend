@@ -27,6 +27,17 @@ exports.createInventoryValidator = [
     }),
 ];
 
+// 🔹 Validate amount (for increment & decrement)
+exports.validateAmount = [
+  body("amount")
+    .exists()
+    .withMessage("Amount is required")
+    .isNumeric()
+    .withMessage("Amount must be a number")
+    .isFloat({ gt: 0 })
+    .withMessage("Amount must be greater than 0"),
+];
+
 //VALIDATION ERROR HANDLER
 exports.validate = (req, res, next) => {
   const errors = validationResult(req);

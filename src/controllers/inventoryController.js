@@ -317,6 +317,97 @@ exports.updateInventoryItem = asyncErrorHandler(async (req, res, next) => {
   });
 });
 
+exports.incrementInventory = asyncErrorHandler(async (req, res, next) => {
+  console.log("🟢 Increment request received");
+
+  const amount = req.body?.amount;
+
+  // 1️⃣ Validate input
+  // if (!amount || amount <= 0) {
+  //   return next(new AppError("Invalid increment amount", 400));
+  // }
+
+  // console.log("STEP 1: Valid amount →", amount);
+
+  // 2️⃣ Atomic increment
+  const updatedItem = await InventoryItem.findOneAndUpdate(
+    {
+      _id: req.params.id,
+      isDeleted: false,
+    },
+    {
+      $inc: { quantity: amount }, // 🔥 atomic increase
+    },
+    {
+      new: true,
+    },
+  );
+
+  console.log("STEP 2: DB operation completed");
+
+  // 3️⃣ Handle not found
+  if (!updatedItem) {
+    console.log("❌ Item not found");
+    return next(new AppError("Inventory item not found", 404));
+  }
+
+  console.log("STEP 3: Success → New quantity:", updatedItem.quantity);
+
+  // 4️⃣ Response
+  res.status(200).json({
+    status: "success",
+    data: {
+      item: updatedItem,
+    },
+  });
+});
+
+exports.decrementInventory = asyncErrorHandler(async (req, res, next) => {
+  console.log("🔵 Decrement request received");
+
+  const { amount } = req.body;
+
+  // 1️⃣ Validate input
+  // if (!amount || amount <= 0) {
+  //   return next(new AppError("Invalid decrement amount", 400));
+  // }
+
+  // console.log("STEP 1: Valid amount →", amount);
+
+  // 2️⃣ Atomic update
+  const updatedItem = await InventoryItem.findOneAndUpdate(
+    {
+      _id: req.params.id,
+      isDeleted: false,
+      quantity: { $gte: amount }, // 🔴 prevent negative
+    },
+    {
+      $inc: { quantity: -amount }, // 🔥 atomic operation
+    },
+    {
+      new: true,
+    },
+  );
+
+  console.log("STEP 2: DB operation completed");
+
+  // 3️⃣ Handle failure
+  if (!updatedItem) {
+    console.log("❌ Insufficient stock or item not found");
+    return next(new AppError("Insufficient stock or item not found", 400));
+  }
+
+  console.log("STEP 3: Success → New quantity:", updatedItem.quantity);
+
+  // 4️⃣ Respond
+  res.status(200).json({
+    status: "success",
+    data: {
+      item: updatedItem,
+    },
+  });
+});
+
 exports.softDeleteInventoryItem = asyncErrorHandler(async (req, res, next) => {
   const item = await InventoryItem.findOneAndUpdate(
     { _id: req.params.id, isDeleted: false },
