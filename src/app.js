@@ -4,6 +4,9 @@ const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const globalErrorHandler = require("./controllers/errorController");
 const cors = require("cors");
+const loggerMiddleware = require("./middlewares/loggerMiddleware");
+const requestIdMiddleware = require("./middlewares/requestIdMiddleware");
+
 
 // --- SWAGGER ADDITIONS START ---
 const swaggerUi = require("swagger-ui-express");
@@ -32,6 +35,8 @@ app.get("/health", (req, res) => {
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 //Routes
+app.use(requestIdMiddleware);
+app.use(loggerMiddleware);
 app.use("/api/auth", authRoutes);
 app.use("/api/inventory", inventoryRoutes); //route mounting
 app.use("/api/users", userRoutes);

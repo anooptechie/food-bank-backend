@@ -274,6 +274,7 @@ exports.updateInventoryItem = asyncErrorHandler(async (req, res, next) => {
     req.params.id,
     updates,
     req.user.id,
+    req.requestId
   );
 
   res.status(200).json({
@@ -290,6 +291,7 @@ exports.incrementInventory = asyncErrorHandler(async (req, res, next) => {
   const updatedItem = await inventoryService.incrementItem(
     req.params.id,
     amount,
+    req.requestId
   );
 
   res.status(200).json({
@@ -306,6 +308,7 @@ exports.decrementInventory = asyncErrorHandler(async (req, res, next) => {
   const updatedItem = await inventoryService.decrementItem(
     req.params.id,
     amount,
+    req.requestId
   );
 
   res.status(200).json({
