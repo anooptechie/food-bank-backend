@@ -5,14 +5,17 @@ const globalErrorHandler = (err, req, res, next) => {
   const message = err.message || "Internal Server Error";
 
   // 🔥 CENTRALIZED ERROR LOG
-  logger.error("Request Error", {
-    requestId: req.requestId,
-    method: req.method,
-    url: req.originalUrl,
-    status: statusCode,
-    errorMessage: message,
-    stack: err.stack, // helpful for debugging
-  });
+  logger.error(
+    {
+      requestId: req.requestId,
+      method: req.method,
+      url: req.originalUrl,
+      status: statusCode,
+      errorMessage: err.message,
+      stack: err.stack,
+    },
+    "Request Error",
+  );
 
   res.status(statusCode).json({
     status: "error",

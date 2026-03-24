@@ -6,6 +6,7 @@ const globalErrorHandler = require("./controllers/errorController");
 const cors = require("cors");
 const loggerMiddleware = require("./middlewares/loggerMiddleware");
 const requestIdMiddleware = require("./middlewares/requestIdMiddleware");
+const metricsRoutes = require("./routes/metricsRoutes");
 
 
 // --- SWAGGER ADDITIONS START ---
@@ -40,6 +41,7 @@ app.use(loggerMiddleware);
 app.use("/api/auth", authRoutes);
 app.use("/api/inventory", inventoryRoutes); //route mounting
 app.use("/api/users", userRoutes);
+app.use("/metrics", metricsRoutes);
 
 // Test route
 app.get("/", (req, res) => {

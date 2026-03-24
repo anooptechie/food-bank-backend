@@ -1,8 +1,8 @@
 const dotenv = require("dotenv");
 
 // Load correct env file based on NODE_ENV
-const envFile = process.env.NODE_ENV === "test" ? ".env.test" : ".env";
-dotenv.config({ path: envFile });
+require("dotenv").config();
+console.log("ENV:", process.env.NODE_ENV);
 
 const app = require("./app");
 const connectDB = require("./config/db");
@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 3000;
 
 const server = app.listen(PORT, () => {
   console.log(
-    `Server running on port ${PORT} [${process.env.NODE_ENV || "dev"} mode]`,
+    `Server running on port ${PORT} [${process.env.NODE_ENV || "development"} mode]`,
   );
 
   // STEP 2: Explicit, env-gated job start
