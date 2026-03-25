@@ -603,3 +603,63 @@ Protection against abuse and brute force attacks
 Controlled traffic handling
 Production-grade API safeguards
 
+🟢 Phase 7 — Caching & Cache Invalidation (Completed)
+🎯 Goal
+
+Improve system performance and reduce database load by introducing caching while ensuring data consistency.
+
+✅ Implemented Features
+
+1️⃣ Redis Integration
+Integrated Redis as an in-memory caching layer
+Used ioredis for Redis client
+Established connection via redisClient
+
+2️⃣ Read Caching (GET Endpoints)
+Implemented caching for read operations:
+Get all inventory items
+Get inventory item by ID (if applicable)
+Cache key strategy:
+cache:<request_url>
+Middleware-based cache lookup:
+If cache exists → return cached response
+If not → fetch from DB and store in cache
+
+3️⃣ Cache Storage
+Cached full API response (not just DB data)
+TTL (Time-To-Live):
+60 seconds
+Ensures automatic cache expiry
+
+4️⃣ Cache Middleware
+Centralized cache handling using middleware
+Responsibilities:
+Generate cache key
+Fetch cached data
+Attach cacheKey to res.locals
+
+5️⃣ Cache Invalidation (Write Operations)
+Cache cleared after:
+Increment
+Decrement
+Update
+Delete
+
+Implemented using:
+await redis.flushall();
+
+🧠 Caching Strategy
+GET request
+ → Check Redis
+ → If hit → return cached data
+ → If miss → fetch DB → store in cache
+
+WRITE request
+ → Update DB
+ → Clear cache
+🎯 Outcome
+Faster API responses
+Reduced database load
+Improved scalability
+Maintained data consistency via invalidation
+

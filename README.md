@@ -422,3 +422,50 @@ Prevents brute-force attacks
 Protects critical operations
 Improves system stability under load
 Essential for production-grade APIs
+
+Phase 6  Caching (Redis)
+
+This project uses Redis to improve performance and reduce database load.
+
+🔹 Redis Setup
+Redis is used as an in-memory cache layer
+Connected using ioredis
+
+🔹 Cached Endpoints
+GET /api/inventory
+GET /api/inventory/:id
+
+🔹 How It Works
+First request:
+DB → Response → Stored in Redis
+Subsequent requests:
+Redis → Response (no DB hit)
+
+🔹 Cache Key Strategy
+cache:<request_url>
+
+🔹 Cache Expiry
+TTL = 60 seconds
+Ensures automatic refresh of data
+
+🔄 Cache Invalidation
+
+To maintain data consistency, cache is cleared after any write operation:
+
+Increment inventory
+Decrement inventory
+Update inventory
+Delete inventory
+
+🔹 Implementation
+await redis.flushall();
+
+⚠️ Note
+Current implementation clears entire cache for simplicity
+Future optimization can target specific cache keys
+
+🎯 Benefits
+Faster response times
+Reduced database load
+Improved scalability
+Production-grade caching strategy

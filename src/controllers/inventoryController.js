@@ -4,6 +4,7 @@ const AppError = require("../utils/appError");
 const emitAuditEvent = require("../audit/auditEmitter");
 const { INVENTORY_UPDATED } = require("../audit/auditEvent.types");
 const inventoryService = require("../services/inventoryService");
+const redis = require("../utils/redisClient");
 
 // exports.testInventory = asyncErrorHandler(async (req, res) => {
 //   res.json({
@@ -277,6 +278,8 @@ exports.updateInventoryItem = asyncErrorHandler(async (req, res, next) => {
     req.requestId
   );
 
+  await redis.flushall();
+
   res.status(200).json({
     status: "success",
     data: {
@@ -294,6 +297,8 @@ exports.incrementInventory = asyncErrorHandler(async (req, res, next) => {
     req.requestId
   );
 
+  await redis.flushall();
+
   res.status(200).json({
     status: "success",
     data: {
@@ -310,6 +315,8 @@ exports.decrementInventory = asyncErrorHandler(async (req, res, next) => {
     amount,
     req.requestId
   );
+
+  await redis.flushall();
 
   res.status(200).json({
     status: "success",
@@ -335,6 +342,8 @@ exports.softDeleteInventoryItem = asyncErrorHandler(async (req, res, next) => {
     );
   }
 
+  await redis.flushall();
+
   res.status(200).json({
     status: "success",
     message: "Inventory item soft deleted successfully",
@@ -354,6 +363,8 @@ exports.softDeleteInventoryItem = asyncErrorHandler(async (req, res, next) => {
 //     }
 //   });
 // });
+
+
 
 exports.getAllInventoryItems = asyncErrorHandler(async (req, res, next) => {
   /* ---------------- Pagination ---------------- */
@@ -412,7 +423,8 @@ exports.getAllInventoryItems = asyncErrorHandler(async (req, res, next) => {
     .skip(skip)
     .limit(limit);
 
-  res.status(200).json({
+  // ✅ Prepare response object
+  const responseData = {
     status: "success",
     results: items.length,
     data: {
@@ -420,7 +432,20 @@ exports.getAllInventoryItems = asyncErrorHandler(async (req, res, next) => {
       page,
       limit,
     },
-  });
+  };
+
+  // ✅ Send response
+  res.status(200).json(responseData);
+
+  // ✅ STORE IN CACHE (this is what you were missing)
+  if (res.locals.cacheKey) {
+    await redis.set(
+      res.locals.cacheKey,
+      JSON.stringify(responseData),
+      "EX",
+      60 // TTL: 60 seconds
+    );
+  }
 });
 
 exports.getInventoryAnalytics = asyncErrorHandler(async (req, res, next) => {

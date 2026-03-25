@@ -15,6 +15,10 @@ const {
 } = require("../middlewares/idempotencyMiddleware");
 const { strictLimiter } = require("../middlewares/rateLimiter");
 
+const cacheMiddleware = require("../middlewares/cacheMiddleware");
+
+const {getAllInventoryItems} = require("../controllers/inventoryController")
+
 // 🔐 All routes protected
 router.use(protect);
 
@@ -96,4 +100,5 @@ router.delete(
   inventoryController.softDeleteInventoryItem,
 );
 
+router.get("/", cacheMiddleware, getAllInventoryItems);
 module.exports = router;
