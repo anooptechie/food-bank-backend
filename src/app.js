@@ -8,7 +8,7 @@ const loggerMiddleware = require("./middlewares/loggerMiddleware");
 const requestIdMiddleware = require("./middlewares/requestIdMiddleware");
 const metricsRoutes = require("./routes/metricsRoutes");
 const prometheusRoutes = require("./routes/prometheusRoutes");
-
+const { globalLimiter } = require("./middlewares/rateLimiter");
 
 // --- SWAGGER ADDITIONS START ---
 const swaggerUi = require("swagger-ui-express");
@@ -39,6 +39,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 //Routes
 app.use(requestIdMiddleware);
 app.use(loggerMiddleware);
+app.use(globalLimiter); // Apply global rate limiter to all routes
 app.use("/api/auth", authRoutes);
 app.use("/api/inventory", inventoryRoutes); //route mounting
 app.use("/api/users", userRoutes);

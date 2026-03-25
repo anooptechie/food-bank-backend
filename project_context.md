@@ -483,3 +483,123 @@ Explicit Non-Goals
 
 Status
 Phase 4 is complete, verified, and locked.
+
+Phase 5 — Observability & Monitoring (Completed)
+🎯 Goal
+
+Make the system:
+
+Traceable
+Debuggable
+Observable
+
+✅ Implemented Features
+
+1️⃣ Request Logging
+Middleware-based logging for every request
+Captures:
+HTTP method
+URL
+status code
+response time
+
+2️⃣ Request Tracing
+Unique requestId generated per request
+Propagated across:
+middleware
+controllers
+services
+Enables end-to-end request tracking
+
+3️⃣ Structured Logging (Pino)
+Replaced console.log with Pino logger
+Environment-based behavior:
+Development → pretty logs
+Production → JSON logs
+Includes contextual metadata:
+requestId
+route
+status
+duration
+
+4️⃣ Centralized Error Handling
+Errors handled in a global error handler
+All errors logged in one place
+Consistent error response format
+
+5️⃣ Metrics Collection
+🔹 In-Memory Metrics (Initial Implementation)
+Tracked:
+total requests
+error count
+latency
+Exposed via /metrics endpoint
+
+🔹 Prometheus Integration
+Integrated prom-client
+Added:
+http_requests_total (counter)
+http_request_duration_ms (histogram)
+Exposed Prometheus-compatible metrics endpoint
+
+🧠 Observability Stack
+Request → Logger → Metrics → Error Handler
+
+🎯 Outcome
+Improved debugging capability
+Real-time system visibility
+Production-ready logging system
+Foundation for monitoring dashboards (Grafana)
+
+Phase 6 — Rate Limiting & API Protection (Completed)
+🎯 Goal
+
+Protect the system from:
+
+Abuse
+Brute-force attacks
+Excessive traffic
+
+✅ Implemented Features
+
+1️⃣ Global Rate Limiting
+Applied to all API routes
+Limits requests per IP
+100 requests / 15 minutes
+Prevents API abuse and traffic spikes
+
+2️⃣ Strict Rate Limiting (Critical Routes)
+Applied to sensitive operations:
+
+Inventory decrement
+Inventory update
+Inventory delete
+20 requests / 15 minutes
+Protects high-impact actions from misuse
+
+3️⃣ Authentication Rate Limiting (Existing)
+Login endpoint:
+5 attempts / 15 minutes
+Refresh token endpoint:
+20 requests / 15 minutes
+Prevents brute-force attacks and token abuse.
+
+4️⃣ Logging Integration
+All rate limit violations are logged using structured logging
+Includes:
+requestId
+IP address
+route
+
+🧠 Rate Limiting Strategy
+Login → Strict limiter (security)
+Refresh → Moderate limiter
+All APIs → Global limiter
+Critical routes → Strict limiter
+
+🎯 Outcome
+Improved system security
+Protection against abuse and brute force attacks
+Controlled traffic handling
+Production-grade API safeguards
+

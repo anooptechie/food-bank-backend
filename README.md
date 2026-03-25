@@ -309,7 +309,7 @@ infrastructure complexity.
 - Field-level authorization inside controllers
 - Deny-by-default update strategy
 
-Auth Hardening Complete
+Phase 4 Auth Hardening Complete
 
 Includes:
 - refresh token hashing and rotation
@@ -347,3 +347,78 @@ Idempotency (Safe Retry Mechanism)
 > network retries
 > client resubmissions
 > Responses cached in MongoDB with TTL-based cleanup
+
+📊 Phase 5 Observability
+
+This project includes a production-grade observability setup.
+
+🔹 Logging
+Uses Pino for high-performance logging
+Structured logs with request context
+Environment-based formatting:
+Development → readable logs
+Production → JSON logs
+🔹 Request Tracing
+Each request is assigned a unique requestId
+Enables tracking across the entire request lifecycle
+🔹 Error Handling
+Centralized global error handler
+All errors are logged with context
+Consistent API error responses
+🔹 Metrics
+Prometheus Metrics
+
+Exposed at:
+GET /metrics
+
+📈 Available Metrics
+http_requests_total
+→ Total number of requests
+http_request_duration_ms
+→ Request latency histogram
+Default Node.js metrics:
+CPU usage
+Memory usage
+Event loop lag
+
+🛡️ Phase 6 Rate Limiting
+
+This project includes a layered rate limiting system to protect the API from abuse and excessive traffic.
+
+🔹 Global Rate Limiting
+Applied to all API routes
+Limits:
+100 requests per 15 minutes per IP
+🔹 Strict Rate Limiting
+
+Applied to critical operations:
+
+Update inventory
+Decrement inventory
+Delete inventory
+20 requests per 15 minutes per IP
+🔹 Authentication Protection
+Login endpoint:
+5 requests per 15 minutes
+Refresh endpoint:
+20 requests per 15 minutes
+🔹 Example Response
+{
+  "status": "error",
+  "message": "Too many requests, please try again later"
+}
+🔹 Logging
+
+All rate limit violations are logged with:
+
+requestId
+IP address
+route
+
+This enables tracking and debugging of abusive traffic patterns.
+
+🎯 Why Rate Limiting?
+Prevents brute-force attacks
+Protects critical operations
+Improves system stability under load
+Essential for production-grade APIs

@@ -13,6 +13,7 @@ const { protect, authorize } = require("../middlewares/authMiddleware");
 const {
   idempotencyMiddleware,
 } = require("../middlewares/idempotencyMiddleware");
+const { strictLimiter } = require("../middlewares/rateLimiter");
 
 // 🔐 All routes protected
 router.use(protect);
@@ -62,6 +63,7 @@ router.patch(
   authorize("update", "inventory"),
   updateInventoryValidator,
   validate,
+  strictLimiter,
   inventoryController.updateInventoryItem,
 );
 
@@ -82,6 +84,7 @@ router.patch(
   idempotencyMiddleware,
   validateAmount,
   validate,
+  strictLimiter,
   inventoryController.decrementInventory,
 );
 
@@ -89,6 +92,7 @@ router.patch(
 router.delete(
   "/:id",
   authorize("delete", "inventory"),
+  strictLimiter,
   inventoryController.softDeleteInventoryItem,
 );
 

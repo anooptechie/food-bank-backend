@@ -1,4 +1,5 @@
 const rateLimit = require("express-rate-limit");
+const logger = require("../utils/logger");
 
 // 🔴 Strict limiter for login
 const loginLimiter = rateLimit({
@@ -24,8 +25,56 @@ const refreshLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// 🌍 Global limiter (for all routes)
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+
+  standardHeaders: true,
+  legacyHeaders: false,
+
+  handler: (req, res) => {
+    logger.warn(
+      {
+        requestId: req.requestId,
+        ip: req.ip,
+        url: req.originalUrl,
+      },
+      "Global rate limit exceeded",
+    );
+
+    res.status(429).json({
+      status: "error",
+      message: "Too many requests, please try again later",
+    });
+  },
+});
+
+// 🔴 Strict limiter (for critical routes)
+const strictLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+
+  handler: (req, res) => {
+    logger.warn(
+      {
+        requestId: req.requestId,
+        ip: req.ip,
+        url: req.originalUrl,
+      },
+      "Strict rate limit exceeded",
+    );
+
+    res.status(429).json({
+      status: "error",
+      message: "Too many requests (strict limit)",
+    });
+  },
+});
+
 module.exports = {
   loginLimiter,
   refreshLimiter,
+  globalLimiter,
+  strictLimiter,
 };
-
