@@ -24,17 +24,21 @@ exports.incrementItem = async (id, amount, requestId) => {
       throw new AppError("Inventory item not found", 404);
     }
 
-    await auditQueue.add("audit.log", {
-      actorId: null, // or pass userId if available
-      action: INVENTORY_UPDATED,
-      resourceType: "InventoryItem",
-      resourceId: updatedItem._id,
-      metadata: {
-        type: "increment",
-        amount,
-        newQuantity: updatedItem.quantity,
-      },
-    });
+    if (auditQueue) {
+      auditQueue.add("audit.log", {
+        actorId: null,
+        action: INVENTORY_UPDATED,
+        resourceType: "InventoryItem",
+        resourceId: updatedItem._id,
+        metadata: {
+          type: "decrement",
+          amount,
+          newQuantity: updatedItem.quantity,
+        },
+      }).catch(err => {
+        logger.error("Audit queue failed", err);
+      });
+    }
 
     // ✅ Success log
     logger.info("Inventory incremented", {
@@ -44,9 +48,9 @@ exports.incrementItem = async (id, amount, requestId) => {
       newQuantity: updatedItem.quantity,
     });
 
-    return updatedItem;
-    
     await clearInventoryCache();
+
+    return updatedItem;
 
   } catch (error) {
     // ❌ Error log
@@ -74,17 +78,22 @@ exports.decrementItem = async (id, amount, requestId) => {
       throw new AppError("Insufficient stock or item not found", 400);
     }
 
-    await auditQueue.add("audit.log", {
-      actorId: null,
-      action: INVENTORY_UPDATED,
-      resourceType: "InventoryItem",
-      resourceId: updatedItem._id,
-      metadata: {
-        type: "decrement",
-        amount,
-        newQuantity: updatedItem.quantity,
-      },
-    });
+    if (auditQueue) {
+      auditQueue.add("audit.log", {
+        actorId: null,
+        action: INVENTORY_UPDATED,
+        resourceType: "InventoryItem",
+        resourceId: updatedItem._id,
+        metadata: {
+          type: "decrement",
+          amount,
+          newQuantity: updatedItem.quantity,
+        },
+      }).catch(err => {
+        logger.error("Audit queue failed", err);
+      });
+    }
+
 
     // ✅ Success log
     logger.info("Inventory decremented", {
@@ -94,9 +103,9 @@ exports.decrementItem = async (id, amount, requestId) => {
       newQuantity: updatedItem.quantity,
     });
 
-    return updatedItem;
-
     await clearInventoryCache();
+
+    return updatedItem;
 
   } catch (error) {
     throw error;

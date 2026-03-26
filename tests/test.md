@@ -207,3 +207,235 @@ Confidence in system behavior under:
 retries
 concurrency
 failures
+
+DOCUMENTATION 2
+# 🛠️ Debugging & Fixing Test Failures — Inventory System
+
+## 🚨 Initial Problem
+
+Running tests resulted in multiple failures:
+
+* ❌ Inventory increment API returning `500`
+* ❌ Idempotency test failing due to missing response data
+* ❌ Errors like:
+
+  * `Cannot read properties of null (reading 'add')`
+  * `Cannot read properties of null (reading 'keys')`
+
+---
+
+## 🔍 Root Cause Analysis
+
+The failures were **not due to business logic**, but due to **external dependencies (Redis & Queues) being unavailable in the test environment**.
+
+### Key Observations:
+
+* Redis is disabled in tests (`Redis disabled in test environment`)
+* Queue services are not initialized
+* Code assumed these dependencies always exist
+
+---
+
+## 🧩 Issues Identified & Fixes Applied
+
+---
+
+### 1️⃣ Audit Queue Causing Service Crash
+
+**File:** `src/services/inventoryService.js`
+
+#### ❌ Problem
+
+```js
+await auditQueue.add(...)
+```
+
+* `auditQueue` was `null` in test environment
+* Caused API to crash → returned `500`
+
+#### ✅ Fix
+
+```js
+if (auditQueue) {
+  auditQueue.add(...).catch(err => {
+    logger.error("Audit queue failed", err);
+  });
+}
+```
+
+#### 💡 Insight
+
+Audit logging is a **side effect**, not core logic — it should never break the API.
+
+---
+
+### 2️⃣ Redis Cache Invalidation Crash
+
+**File:** `src/utils/cacheHelper.js`
+
+#### ❌ Problem
+
+```js
+const keys = await redis.keys(...)
+```
+
+* `redis` was `null` in test environment
+* Caused crash when accessing `.keys()`
+
+#### ✅ Fix
+
+```js
+if (!redis) return;
+
+const keys = await redis.keys(...);
+```
+
+#### 💡 Insight
+
+Cache is optional — system should work without it.
+
+---
+
+### 3️⃣ Inventory Queue Crash in Controller
+
+**File:** `src/controllers/inventoryController.js`
+
+#### ❌ Problem
+
+```js
+await inventoryQueue.add(...)
+```
+
+* `inventoryQueue` was `null`
+* Crashed controller → caused test failure
+
+#### ✅ Fix
+
+```js
+if (inventoryQueue) {
+  inventoryQueue.add(...).catch(err => {
+    logger.error("Inventory queue failed", err);
+  });
+}
+```
+
+#### 💡 Insight
+
+Queue operations must be **non-blocking and safe**
+
+---
+
+### 4️⃣ Dead Code (Unreachable Logic)
+
+**File:** `inventoryService.js`
+
+#### ❌ Problem
+
+```js
+return updatedItem;
+await clearInventoryCache(); // never runs
+```
+
+#### ✅ Fix
+
+```js
+await clearInventoryCache();
+return updatedItem;
+```
+
+#### 💡 Insight
+
+Always ensure important operations execute before `return`
+
+---
+
+### 5️⃣ Missing Logger Import
+
+**File:** `cacheHelper.js`
+
+#### ❌ Problem
+
+```js
+logger.info(...) // logger not defined
+```
+
+#### ✅ Fix
+
+```js
+const logger = require("./logger");
+```
+
+---
+
+## ✅ Final Result
+
+All test suites passed successfully:
+
+* ✅ Inventory tests
+* ✅ Idempotency tests
+* ✅ Concurrency tests
+* ✅ Auth tests
+
+---
+
+## 🧠 Key Learnings
+
+### 🔹 1. Separate Core Logic from Side Effects
+
+* Core logic → must always succeed
+* Side effects → optional, failure-tolerant
+
+---
+
+### 🔹 2. Never Assume External Services Exist
+
+Always guard:
+
+```js
+if (service) {
+  // safe usage
+}
+```
+
+---
+
+### 🔹 3. Make Systems Test-Friendly
+
+* Tests often run without Redis/Queues
+* Code should adapt accordingly
+
+---
+
+### 🔹 4. Avoid Blocking Operations for Non-Critical Tasks
+
+Use:
+
+```js
+queue.add(...).catch(...)
+```
+
+instead of:
+
+```js
+await queue.add(...)
+```
+
+---
+
+## 🚀 Conclusion
+
+The issue was not with business logic, but with **tight coupling to infrastructure**.
+
+By:
+
+* adding guards
+* making side effects non-blocking
+* ensuring safe execution
+
+👉 the system became:
+
+* more robust
+* testable
+* production-ready
+
+---

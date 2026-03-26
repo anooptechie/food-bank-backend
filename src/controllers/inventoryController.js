@@ -294,9 +294,13 @@ exports.incrementInventory = asyncErrorHandler(async (req, res, next) => {
   );
 
   //(enqueue job)
-  await inventoryQueue.add("inventory.updated", {
+  if (inventoryQueue) {
+  inventoryQueue.add("inventory.updated", {
     itemId: updatedItem._id,
+  }).catch(err => {
+    logger.error("Inventory queue failed", err);
   });
+}
 
   res.status(200).json({
     status: "success",
@@ -314,9 +318,13 @@ exports.decrementInventory = asyncErrorHandler(async (req, res, next) => {
   );
 
   //(enqueue job)
-  await inventoryQueue.add("inventory.updated", {
+  if (inventoryQueue) {
+  inventoryQueue.add("inventory.updated", {
     itemId: updatedItem._id,
+  }).catch(err => {
+    logger.error("Inventory queue failed", err);
   });
+}
 
   res.status(200).json({
     status: "success",

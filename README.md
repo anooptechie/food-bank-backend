@@ -537,3 +537,113 @@ Rate Limiting
 Global and route-specific limits
 Strict protection on auth and critical operations
 Prevents abuse and brute-force attacks
+
+Phase 9 Asynchronous Processing with BullMQ
+
+To improve scalability and system responsiveness, this project uses BullMQ with Redis for background job processing.
+
+🎯 Why BullMQ?
+
+Previously, operations like:
+
+inventory alerts
+audit logging
+
+were handled synchronously, which:
+
+increased API response time
+tightly coupled components
+reduced scalability
+⚡ Solution: Event-Driven Architecture
+
+We introduced queues to decouple responsibilities:
+
+API Request
+   ↓
+Service Layer
+   ↓
+Queue (BullMQ)
+   ↓
+Worker (Async Processing)
+📦 Implemented Queues
+1️⃣ Inventory Queue
+
+Trigger:
+
+Inventory increment
+Inventory decrement
+
+Purpose:
+
+Detect low stock
+Detect upcoming expiry
+
+2️⃣ Audit Queue
+
+Trigger:
+
+Inventory updates
+Increment / decrement actions
+
+Purpose:
+
+Log system events
+Track changes for auditing
+
+🧠 Key Design Decisions
+✅ 1. Non-blocking API
+
+Queues are triggered after successful DB operations:
+
+DB Update → Queue Job → Response Sent
+
+👉 Ensures fast API responses
+
+✅ 2. Environment Isolation
+
+Queues are disabled during testing:
+
+if (process.env.NODE_ENV !== "test") {
+  // enable queues
+}
+
+👉 Prevents:
+
+open Redis connections
+hanging test processes
+✅ 3. Safe Queue Usage
+
+All queue calls are guarded:
+
+if (auditQueue) {
+  await auditQueue.add(...);
+}
+
+👉 Avoids runtime crashes in test environments
+
+✅ 4. Decoupled Architecture
+Inventory logic → independent
+Audit system → independent
+Processing → async
+
+👉 Improves maintainability and scalability
+
+⚙️ Redis Integration
+
+Redis is used as the message broker.
+
+Runs via Docker
+Used only in non-test environments
+
+🧪 Testing Strategy
+Queues disabled in test environment
+In-memory MongoDB used
+Focus on:
+correctness
+idempotency
+concurrency
+
+💡 Key Learnings
+Async systems must be environment-aware
+Background workers can cause test instability if not isolated
+Decoupling improves system reliability and scalability

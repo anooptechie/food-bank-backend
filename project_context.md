@@ -702,3 +702,49 @@ Guarantees
 System behavior is deterministic
 Critical invariants are protected against regressions
 Backend correctness verified end-to-end
+
+🧠 Architecture Evolution
+Phase 9: Async System Upgrade
+
+Introduced BullMQ-based queue system to:
+
+decouple audit logging
+offload inventory alert processing
+improve API performance
+
+🔄 Before
+Request → DB → Audit → Response
+🚀 After
+Request → DB → Queue → Response
+                      ↓
+                   Worker → Audit
+
+🧱 Components Added
+inventoryQueue
+auditQueue
+inventoryWorker
+auditWorker
+
+⚠️ Challenges Faced
+1️⃣ Jest Hanging
+Cause: active Redis connections + workers
+Fix: disable queues in test env
+
+2️⃣ Mongo Memory Server Timeout
+Cause: async processes blocking lifecycle
+Fix: isolate background systems
+
+3️⃣ Null Queue Crash
+Cannot read properties of null (reading 'add')
+Cause: queue disabled but still used
+Fix: guard queue calls
+
+4️⃣ Path Issues (worker vs workers)
+Cause: incorrect folder naming
+Fix: consistent directory structure
+
+✅ Outcome
+Fully async processing system
+Test-safe architecture
+Clean separation of concerns
+Production-ready design pattern
