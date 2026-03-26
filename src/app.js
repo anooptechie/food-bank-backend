@@ -21,6 +21,7 @@ const swaggerDocument = YAML.load(path.join(__dirname, "../docs/swagger.yaml"));
 // --- SWAGGER ADDITIONS END ---
 
 const app = express();
+app.set("trust proxy", 1); 
 
 // Middleware to parse JSON
 app.use(express.json());

@@ -1,10 +1,14 @@
 const dotenv = require("dotenv");
-
+// require("./worker/inventoryWorker");
 // Load correct env file based on NODE_ENV
 require("dotenv").config();
 console.log("ENV:", process.env.NODE_ENV);
 
 const app = require("./app");
+if (process.env.NODE_ENV !== "test") {
+  require("./worker/inventoryWorker");
+  require("./worker/auditWorker");
+}
 const connectDB = require("./config/db");
 
 // Import job controls (Phase 3)

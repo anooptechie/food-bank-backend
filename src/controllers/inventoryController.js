@@ -6,6 +6,7 @@ const { INVENTORY_UPDATED } = require("../audit/auditEvent.types");
 const inventoryService = require("../services/inventoryService");
 const redis = require("../utils/redisClient");
 const logger = require("../utils/logger");
+const inventoryQueue = require("../queues/inventoryQueue");
 
 // exports.testInventory = asyncErrorHandler(async (req, res) => {
 //   res.json({
@@ -292,6 +293,11 @@ exports.incrementInventory = asyncErrorHandler(async (req, res, next) => {
     req.requestId
   );
 
+  //(enqueue job)
+  await inventoryQueue.add("inventory.updated", {
+    itemId: updatedItem._id,
+  });
+
   res.status(200).json({
     status: "success",
     data: updatedItem,
@@ -306,6 +312,11 @@ exports.decrementInventory = asyncErrorHandler(async (req, res, next) => {
     amount,
     req.requestId
   );
+
+  //(enqueue job)
+  await inventoryQueue.add("inventory.updated", {
+    itemId: updatedItem._id,
+  });
 
   res.status(200).json({
     status: "success",

@@ -4,6 +4,7 @@ const emitAuditEvent = require("../audit/auditEmitter");
 const { INVENTORY_UPDATED } = require("../audit/auditEvent.types");
 const logger = require("../utils/logger");
 const { clearInventoryCache } = require("../utils/cacheHelper");
+const auditQueue = require("../queues/auditQueue")
 
 // 🔹 INCREMENT
 exports.incrementItem = async (id, amount, requestId) => {
@@ -22,6 +23,18 @@ exports.incrementItem = async (id, amount, requestId) => {
     if (!updatedItem) {
       throw new AppError("Inventory item not found", 404);
     }
+
+    await auditQueue.add("audit.log", {
+      actorId: null, // or pass userId if available
+      action: INVENTORY_UPDATED,
+      resourceType: "InventoryItem",
+      resourceId: updatedItem._id,
+      metadata: {
+        type: "increment",
+        amount,
+        newQuantity: updatedItem.quantity,
+      },
+    });
 
     // ✅ Success log
     logger.info("Inventory incremented", {
@@ -60,6 +73,18 @@ exports.decrementItem = async (id, amount, requestId) => {
     if (!updatedItem) {
       throw new AppError("Insufficient stock or item not found", 400);
     }
+
+    await auditQueue.add("audit.log", {
+      actorId: null,
+      action: INVENTORY_UPDATED,
+      resourceType: "InventoryItem",
+      resourceId: updatedItem._id,
+      metadata: {
+        type: "decrement",
+        amount,
+        newQuantity: updatedItem.quantity,
+      },
+    });
 
     // ✅ Success log
     logger.info("Inventory decremented", {
@@ -102,7 +127,7 @@ exports.updateItem = async (id, updates, userId, requestId) => {
     );
 
     // Emit audit event
-    emitAuditEvent({
+    await auditQueue.add("audit.log", {
       actorId: userId,
       action: INVENTORY_UPDATED,
       resourceType: "InventoryItem",
@@ -130,9 +155,11 @@ exports.updateItem = async (id, updates, userId, requestId) => {
       userId,
     });
 
+    await clearInventoryCache();
+
     return updatedItem;
 
-    await clearInventoryCache();
+    
 
   } catch (error) {
     // ❌ Error log
