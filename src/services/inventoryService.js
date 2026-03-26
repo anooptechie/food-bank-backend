@@ -3,6 +3,7 @@ const AppError = require("../utils/appError");
 const emitAuditEvent = require("../audit/auditEmitter");
 const { INVENTORY_UPDATED } = require("../audit/auditEvent.types");
 const logger = require("../utils/logger");
+const { clearInventoryCache } = require("../utils/cacheHelper");
 
 // 🔹 INCREMENT
 exports.incrementItem = async (id, amount, requestId) => {
@@ -31,6 +32,9 @@ exports.incrementItem = async (id, amount, requestId) => {
     });
 
     return updatedItem;
+    
+    await clearInventoryCache();
+
   } catch (error) {
     // ❌ Error log
 
@@ -66,6 +70,9 @@ exports.decrementItem = async (id, amount, requestId) => {
     });
 
     return updatedItem;
+
+    await clearInventoryCache();
+
   } catch (error) {
     throw error;
   }
@@ -124,6 +131,9 @@ exports.updateItem = async (id, updates, userId, requestId) => {
     });
 
     return updatedItem;
+
+    await clearInventoryCache();
+
   } catch (error) {
     // ❌ Error log
 

@@ -5,6 +5,7 @@ const emitAuditEvent = require("../audit/auditEmitter");
 const { INVENTORY_UPDATED } = require("../audit/auditEvent.types");
 const inventoryService = require("../services/inventoryService");
 const redis = require("../utils/redisClient");
+const logger = require("../utils/logger");
 
 // exports.testInventory = asyncErrorHandler(async (req, res) => {
 //   res.json({
@@ -278,8 +279,6 @@ exports.updateInventoryItem = asyncErrorHandler(async (req, res, next) => {
     req.requestId
   );
 
-  await redis.flushall();
-
   res.status(200).json({
     status: "success",
     data: {
@@ -297,8 +296,6 @@ exports.incrementInventory = asyncErrorHandler(async (req, res, next) => {
     req.requestId
   );
 
-  await redis.flushall();
-
   res.status(200).json({
     status: "success",
     data: {
@@ -315,8 +312,6 @@ exports.decrementInventory = asyncErrorHandler(async (req, res, next) => {
     amount,
     req.requestId
   );
-
-  await redis.flushall();
 
   res.status(200).json({
     status: "success",
@@ -341,9 +336,7 @@ exports.softDeleteInventoryItem = asyncErrorHandler(async (req, res, next) => {
       new AppError("Inventory item not found or already deleted", 404),
     );
   }
-
-  await redis.flushall();
-
+  
   res.status(200).json({
     status: "success",
     message: "Inventory item soft deleted successfully",
@@ -445,6 +438,7 @@ exports.getAllInventoryItems = asyncErrorHandler(async (req, res, next) => {
       "EX",
       60 // TTL: 60 seconds
     );
+    logger.info({ key: res.locals.cacheKey }, "Cache STORED"); // 👈 ADD HERE
   }
 });
 

@@ -42,6 +42,7 @@ router.get(
 router.get(
   "/",
   authorize("read", "inventory"),
+  cacheMiddleware,
   inventoryController.getAllInventoryItems,
 );
 
@@ -100,5 +101,5 @@ router.delete(
   inventoryController.softDeleteInventoryItem,
 );
 
-router.get("/", cacheMiddleware, getAllInventoryItems);
+// router.get("/", cacheMiddleware, getAllInventoryItems);
 module.exports = router;

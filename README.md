@@ -423,7 +423,7 @@ Protects critical operations
 Improves system stability under load
 Essential for production-grade APIs
 
-Phase 6  Caching (Redis)
+Phase 7 Caching (Redis)
 
 This project uses Redis to improve performance and reduce database load.
 
@@ -469,3 +469,25 @@ Faster response times
 Reduced database load
 Improved scalability
 Production-grade caching strategy
+
+Phase 7.1 Replaced naive cache invalidation (flushall) with targeted key-based invalidation for improved performance and scalability.
+
+🔹 Implementation
+
+Targeted cache invalidation is implemented using Redis key patterns:
+
+- Inventory-related cache keys follow:
+  cache:/api/inventory*
+
+- On write operations, only relevant cache keys are deleted:
+  - increment
+  - decrement
+  - update
+  - delete
+
+Example:
+Delete all inventory-related cache keys instead of flushing entire cache.
+
+⚠️ Note
+- Uses Redis KEYS for simplicity (learning phase)
+- In production, SCAN-based iteration is recommended to avoid blocking Redis.

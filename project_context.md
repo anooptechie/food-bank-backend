@@ -663,3 +663,19 @@ Reduced database load
 Improved scalability
 Maintained data consistency via invalidation
 
+Phase 7.1 Replaced naive cache invalidation (flushall) with targeted key-based invalidation for improved performance and scalability.
+
+Implemented using targeted cache invalidation:
+
+- Cache keys follow pattern:
+  cache:/api/inventory*
+
+- On write operations:
+  - matching keys are fetched using Redis KEYS
+  - only relevant keys are deleted using DEL
+
+- Ensures:
+  - minimal cache disruption
+  - better performance
+  - scalability compared to full cache flush
+
