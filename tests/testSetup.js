@@ -1,22 +1,26 @@
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
+const { MongoMemoryServer } = require("mongodb-memory-server");
 
 // Force test environment
 process.env.NODE_ENV = "test";
 
-// Load test env variables
+// Load env
 dotenv.config({ path: ".env.test" });
 
-// 🚨 Safety check (VERY IMPORTANT)
-if (!process.env.MONGO_URI || !process.env.MONGO_URI.includes("127.0.0.1")) {
-  throw new Error("Tests must run on local database only!");
-}
+let mongoServer;
 
 beforeAll(async () => {
-  await mongoose.connect(process.env.MONGO_URI);
+  console.log("Starting in-memory MongoDB...");
+
+  mongoServer = await MongoMemoryServer.create();
+  const uri = mongoServer.getUri();
+
+  await mongoose.connect(uri);
+
+  console.log("Mongo Connected (in-memory)");
 });
 
-// ✅ Clean ALL collections (not just User)
 beforeEach(async () => {
   const collections = await mongoose.connection.db.collections();
 
@@ -27,4 +31,5 @@ beforeEach(async () => {
 
 afterAll(async () => {
   await mongoose.connection.close();
+  await mongoServer.stop(); // 🔥 important
 });

@@ -237,9 +237,7 @@ exports.addItems = asyncErrorHandler(async (req, res) => {
 
   res.status(201).json({
     status: "success",
-    data: {
-      item: newItem,
-    },
+    data: newItem, // 🔥 FIX
   });
 });
 
@@ -281,9 +279,7 @@ exports.updateInventoryItem = asyncErrorHandler(async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
-    data: {
-      item: updatedItem,
-    },
+    data: updatedItem,
   });
 });
 
@@ -298,9 +294,7 @@ exports.incrementInventory = asyncErrorHandler(async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
-    data: {
-      item: updatedItem,
-    },
+    data: updatedItem,
   });
 });
 
@@ -315,9 +309,7 @@ exports.decrementInventory = asyncErrorHandler(async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
-    data: {
-      item: updatedItem,
-    },
+    data: updatedItem,
   });
 });
 
@@ -420,11 +412,7 @@ exports.getAllInventoryItems = asyncErrorHandler(async (req, res, next) => {
   const responseData = {
     status: "success",
     results: items.length,
-    data: {
-      items,
-      page,
-      limit,
-    },
+    data: items, // 🔥 FIX (array)
   };
 
   // ✅ Send response

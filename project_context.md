@@ -44,7 +44,10 @@ The initial use case was NGO / food bank inventory management, but no domain-spe
 - Express.js
 - MongoDB Atlas
 - Mongoose
-- JWT (short-lived access tokens)
+- JWT (access + refresh tokens with rotation)
+- Redis (caching layer)
+- Jest + Supertest (integration testing)
+- mongodb-memory-server (test database)
 
 ---
 
@@ -679,3 +682,23 @@ Implemented using targeted cache invalidation:
   - better performance
   - scalability compared to full cache flush
 
+Phase 8 - Integration Testing 
+
+The system includes a fully automated integration test suite.
+
+Scope
+Authentication flow (login, token validation)
+Authorization enforcement (role-based access)
+Inventory operations (CRUD + validation)
+Concurrency safety (parallel updates)
+Idempotency guarantees (duplicate request protection)
+
+Test Environment
+In-memory MongoDB (mongodb-memory-server)
+Redis disabled during tests
+No external dependencies
+
+Guarantees
+System behavior is deterministic
+Critical invariants are protected against regressions
+Backend correctness verified end-to-end

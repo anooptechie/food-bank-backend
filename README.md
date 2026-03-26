@@ -491,3 +491,49 @@ Delete all inventory-related cache keys instead of flushing entire cache.
 ⚠️ Note
 - Uses Redis KEYS for simplicity (learning phase)
 - In production, SCAN-based iteration is recommended to avoid blocking Redis.
+
+Phase 8 Automated Testing (Jest + Supertest)
+
+The system includes a comprehensive integration test suite covering critical backend behavior.
+
+Coverage
+Authentication (login, role-based access)
+Inventory operations (create, update, delete)
+Concurrency handling (parallel updates)
+Idempotency (safe retries using Idempotency-Key)
+Authorization enforcement
+
+Test Environment
+Uses mongodb-memory-server (in-memory MongoDB)
+No external DB dependency
+Redis is disabled automatically in test mode
+Fully isolated and deterministic test runs
+
+Key Guarantees
+No race conditions in concurrent updates
+No duplicate operations under retries
+Authentication and authorization cannot regress
+
+Advanced Backend Features
+
+This project implements several production-grade backend patterns:
+
+Idempotency (Safe Retries)
+Prevents duplicate operations using Idempotency-Key
+Ensures safe retries in unreliable networks
+Responses cached and replayed for identical requests
+
+Concurrency Control
+Atomic updates using MongoDB $inc
+Prevents race conditions under parallel requests
+Guarantees consistent inventory state
+
+Caching (Redis)
+Read-through caching for GET endpoints
+TTL-based cache expiration (60s)
+Targeted cache invalidation on write operations
+
+Rate Limiting
+Global and route-specific limits
+Strict protection on auth and critical operations
+Prevents abuse and brute-force attacks

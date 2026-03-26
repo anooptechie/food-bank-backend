@@ -2,7 +2,13 @@ const redis = require("../utils/redisClient");
 const logger = require("../utils/logger");
 
 const cacheMiddleware = async (req, res, next) => {
-  console.log("🚀 Cache middleware triggered"); // 👈 ADD HERE (FIRST LINE)
+  console.log("🚀 Cache middleware triggered");
+
+  // ✅ Skip cache in tests
+  if (!redis) {
+    return next();
+  }
+
   const key = `cache:${req.originalUrl}`;
 
   try {
@@ -13,8 +19,7 @@ const cacheMiddleware = async (req, res, next) => {
       return res.status(200).json(JSON.parse(cachedData));
     }
 
-    logger.info({ key }, "Cache MISS"); 
-    // store key for later use
+    logger.info({ key }, "Cache MISS");
     res.locals.cacheKey = key;
 
     next();

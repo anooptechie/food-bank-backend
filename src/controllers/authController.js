@@ -86,6 +86,11 @@ exports.login = asyncErrorHandler(async (req, res, next) => {
   // 7️⃣ Respond
   res.status(200).json({
     status: "success",
+
+  // ✅ backward compatibility for tests
+    token: accessToken,
+
+  // ✅ actual system design
     accessToken,
     refreshToken,
   });

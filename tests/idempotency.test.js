@@ -29,7 +29,10 @@ describe("Idempotency", () => {
       .set("Authorization", `Bearer ${token}`)
       .send({
         name: "Rice",
+        category: "Food",
         quantity: 10,
+        minThreshold: 2,
+        expiryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // +7 days
       });
 
     itemId = res.body.data._id;
