@@ -34,15 +34,14 @@ if (process.env.NODE_ENV !== "test") {
     if (job.attemptsMade === job.opts.attempts) {
       if (auditDLQ) {
         try {
-          await auditDLQ.add("audit.failed", {
+          const dlqJob = await auditDLQ.add("audit.failed", {
             originalJobId: job.id,
             data: job.data,
             failedReason: err.message,
-            attemptsMade: job.attemptsMade,
             timestamp: new Date().toISOString(),
           });
 
-          console.log(`Moved job ${job.id} to DLQ (FINAL FAILURE)`);
+          console.log(`Moved job ${job.id} to DLQ as DLQ Job ID: ${dlqJob.id}`);
         } catch (dlqError) {
           console.error("Failed to move job to DLQ", dlqError.message);
         }

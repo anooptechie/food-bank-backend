@@ -9,6 +9,7 @@ const requestIdMiddleware = require("./middlewares/requestIdMiddleware");
 const metricsRoutes = require("./routes/metricsRoutes");
 const prometheusRoutes = require("./routes/prometheusRoutes");
 const { globalLimiter } = require("./middlewares/rateLimiter");
+const dlqRoutes = require("./routes/dlqRoutes");
 
 // --- SWAGGER ADDITIONS START ---
 const swaggerUi = require("swagger-ui-express");
@@ -46,6 +47,7 @@ app.use("/api/inventory", inventoryRoutes); //route mounting
 app.use("/api/users", userRoutes);
 // app.use("/metrics", metricsRoutes);
 app.use("/metrics", prometheusRoutes);
+app.use("/api/dlq", dlqRoutes);
 
 // Test route
 app.get("/", (req, res) => {
