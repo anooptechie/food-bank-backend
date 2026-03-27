@@ -11,6 +11,7 @@ const prometheusRoutes = require("./routes/prometheusRoutes");
 const { globalLimiter } = require("./middlewares/rateLimiter");
 const dlqRoutes = require("./routes/dlqRoutes");
 const bullBoard = require("./utils/bullBoard");
+const healthRoutes = require("./routes/healthRoutes");
 
 // --- SWAGGER ADDITIONS START ---
 const swaggerUi = require("swagger-ui-express");
@@ -30,13 +31,13 @@ app.use(express.json());
 app.use(cors());
 
 // Swagger UI
-app.get("/health", (req, res) => {
-  res.status(200).json({
-    status: "ok",
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString(),
-  });
-});
+// app.get("/health", (req, res) => {
+//   res.status(200).json({
+//     status: "ok",
+//     uptime: process.uptime(),
+//     timestamp: new Date().toISOString(),
+//   });
+// });
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 //Routes
@@ -50,11 +51,12 @@ app.use("/api/users", userRoutes);
 app.use("/metrics", prometheusRoutes);
 app.use("/api/dlq", dlqRoutes);
 app.use("/admin/queues", bullBoard.getRouter());
+app.use("/health", healthRoutes);
 
 // Test route
-app.get("/", (req, res) => {
-  res.send("Food Bank API is running");
-});
+// app.get("/", (req, res) => {
+//   res.send("Food Bank API is running");
+// });
 
 //Global Error Handler
 app.use(globalErrorHandler);

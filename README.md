@@ -776,3 +776,22 @@ Retry → DLQ → Replay
 ### 🧠 Why It Matters
 
 The Outbox pattern solves the **dual-write problem**, a common issue in distributed systems, ensuring consistency between database state and asynchronous processing.
+
+❤️ Health Check Endpoint
+
+Monitor system status using:
+
+GET /health
+🔍 Checks
+MongoDB connection
+Redis availability
+Queue (BullMQ) status
+✅ Example Response
+{
+  "status": "ok",
+  "services": {
+    "mongodb": "up",
+    "redis": "up",
+    "queue": "up"
+  }
+}

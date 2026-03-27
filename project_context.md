@@ -896,3 +896,30 @@ DB → Outbox → Queue → Worker → DLQ → Replay
 🧠 Key Insight
 
 Outbox pattern eliminates the dual-write problem by treating the database as the source of truth for both data and events.
+
+Health Check System
+✅ Implementation
+
+Added a system health endpoint to monitor core dependencies:
+
+MongoDB connection status
+Redis connectivity
+Queue availability (BullMQ)
+🔹 Endpoint
+
+GET /health
+
+🔹 Response
+{
+  "status": "ok",
+  "services": {
+    "mongodb": "up",
+    "redis": "up",
+    "queue": "up"
+  }
+}
+🔹 Purpose
+Provides real-time system status
+Helps detect dependency failures
+Useful for monitoring and production readiness
+
