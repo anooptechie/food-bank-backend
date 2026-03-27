@@ -11,12 +11,12 @@ if (process.env.NODE_ENV !== "test") {
   const worker = new Worker(
     "auditQueue",
     async (job) => {
-      // if (job.name === "audit.log") {
-      //   await emitAuditEvent(job.data);
-      // }
       if (job.name === "audit.log") {
-        throw new Error("DLQ test failure");
+        await emitAuditEvent(job.data);
       }
+      // if (job.name === "audit.log") {
+      //   throw new Error("DLQ test failure");
+      // }
     },
     { connection }
   );

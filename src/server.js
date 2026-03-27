@@ -8,6 +8,7 @@ const app = require("./app");
 if (process.env.NODE_ENV !== "test") {
   require("./worker/inventoryWorker");
   require("./worker/auditWorker");
+  require("./worker/outboxWorker");
 }
 const connectDB = require("./config/db");
 

@@ -709,3 +709,70 @@ Replay system
 Safe caching with invalidation
 Observability via structured logging
 
+Phase 11
+## 📦 Outbox Pattern (Reliable Event Delivery)
+
+### ❗ Problem
+
+Directly sending events to a queue after a database update can lead to inconsistencies:
+
+* Database write succeeds
+* Queue operation fails
+
+👉 This results in **lost events and inconsistent system state**
+
+---
+
+### ✅ Solution: Outbox Pattern
+
+Events are first stored in the database (Outbox) and then asynchronously processed.
+
+---
+
+### 🔄 Flow
+
+```text
+DB Update
+   ↓
+Outbox (MongoDB)
+   ↓
+Outbox Worker
+   ↓
+Queue (BullMQ)
+   ↓
+Worker Processing
+   ↓
+Retry → DLQ → Replay
+```
+
+---
+
+### 🔹 Key Benefits
+
+* **No event loss** — events are persisted in DB
+* **Guaranteed delivery** — worker retries processing
+* **Decoupled architecture** — DB and queue are not tightly coupled
+* **Improved observability** — full trace of event lifecycle
+
+---
+
+### 🔹 Example Outbox Document
+
+```json
+{
+  "eventType": "inventory.updated",
+  "payload": {
+    "actorId": "...",
+    "resourceId": "...",
+    "metadata": { "type": "increment", "amount": 5 }
+  },
+  "status": "pending",
+  "attempts": 0
+}
+```
+
+---
+
+### 🧠 Why It Matters
+
+The Outbox pattern solves the **dual-write problem**, a common issue in distributed systems, ensuring consistency between database state and asynchronous processing.

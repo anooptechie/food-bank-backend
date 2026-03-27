@@ -809,3 +809,90 @@ Dead Letter Queue
 Replay system
 Safe caching with invalidation
 Observability via structured logging
+
+Phase 11
+Phase: Outbox Pattern Implementation (Reliable Event Delivery)
+📌 Problem Identified
+
+The system previously used direct queue publishing:
+
+DB update → auditQueue.add()
+
+This introduced the dual-write problem:
+
+Database write could succeed
+Queue operation could fail
+
+👉 Result: lost audit events and inconsistent system state
+
+✅ Solution: Outbox Pattern
+
+Introduced an Outbox collection in MongoDB to ensure reliable event delivery.
+
+🔹 New Flow
+
+DB update → Outbox (MongoDB) → Outbox Worker → Queue → Worker → DLQ → Replay
+
+🔹 Implementation Details
+1. Outbox Model
+
+Created a dedicated collection:
+
+eventType
+payload
+status → pending / processed / failed
+attempts
+lastError
+
+2. Service Layer Changes
+
+Replaced direct queue calls with:
+
+Outbox.create(...)
+
+👉 Ensures event persistence alongside DB operations
+
+3. Outbox Worker
+Polls pending events
+Pushes events to auditQueue
+Marks events as processed
+Handles failures with retry logic
+
+4. Observability Improvements
+
+Added structured logs:
+
+Outbox → Queue success
+Outbox event processed
+
+👉 Enables clear tracing across system layers
+
+🔹 Failure Handling
+Queue failures handled via retry + DLQ
+Outbox ensures no event loss before queue
+DLQ ensures no event loss after queue
+
+🔹 System Guarantees
+Guarantee	Achieved
+No event loss	✅
+Retry capability	✅
+Failure visibility	✅
+Manual recovery (Replay)	✅
+🎯 Outcome
+
+The system now ensures:
+
+Reliable event delivery
+Strong consistency between DB and async processing
+Production-grade fault tolerance
+📌 Architectural Evolution
+
+Before:
+DB → Queue → Worker → DLQ
+
+After:
+DB → Outbox → Queue → Worker → DLQ → Replay
+
+🧠 Key Insight
+
+Outbox pattern eliminates the dual-write problem by treating the database as the source of truth for both data and events.

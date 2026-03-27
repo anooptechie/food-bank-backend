@@ -5,6 +5,7 @@ const { INVENTORY_UPDATED } = require("../audit/auditEvent.types");
 const logger = require("../utils/logger");
 const { clearInventoryCache } = require("../utils/cacheHelper");
 const auditQueue = require("../queues/auditQueue")
+const Outbox = require("../models/outboxModel");
 
 // 🔹 INCREMENT
 exports.incrementItem = async (id, amount, requestId, userId) => {
@@ -24,33 +25,20 @@ exports.incrementItem = async (id, amount, requestId, userId) => {
       throw new AppError("Inventory item not found", 404);
     }
 
-    if (auditQueue) {
-      auditQueue.add(
-        "audit.log",
-        {
-          actorId: userId,
-          action: INVENTORY_UPDATED,
-          resourceType: "InventoryItem",
-          resourceId: updatedItem._id,
-          metadata: {
-            type: "increment", // keep correct type per function
-            amount,
-            newQuantity: updatedItem.quantity,
-          },
+    await Outbox.create({
+      eventType: "inventory.updated",
+      payload: {
+        actorId: userId,
+        action: INVENTORY_UPDATED,
+        resourceType: "InventoryItem",
+        resourceId: updatedItem._id,
+        metadata: {
+          type: "increment",
+          amount,
+          newQuantity: updatedItem.quantity,
         },
-        {
-          attempts: 5,
-          backoff: {
-            type: "exponential",
-            delay: 500,
-          },
-          removeOnComplete: true,
-          removeOnFail: false,
-        }
-      ).catch(err => {
-        logger.error("Audit queue failed", err);
-      });
-    }
+      },
+    });
 
     // ✅ Success log
     logger.info("Inventory incremented", {
@@ -90,33 +78,20 @@ exports.decrementItem = async (id, amount, requestId, userId) => {
       throw new AppError("Insufficient stock or item not found", 400);
     }
 
-    if (auditQueue) {
-      auditQueue.add(
-        "audit.log",
-        {
-          actorId: userId,
-          action: INVENTORY_UPDATED,
-          resourceType: "InventoryItem",
-          resourceId: updatedItem._id,
-          metadata: {
-            type: "decrement", // keep correct type per function
-            amount,
-            newQuantity: updatedItem.quantity,
-          },
+    await Outbox.create({
+      eventType: "inventory.updated",
+      payload: {
+        actorId: userId,
+        action: INVENTORY_UPDATED,
+        resourceType: "InventoryItem",
+        resourceId: updatedItem._id,
+        metadata: {
+          type: "decrement",
+          amount,
+          newQuantity: updatedItem.quantity,
         },
-        {
-          attempts: 5,
-          backoff: {
-            type: "exponential",
-            delay: 500,
-          },
-          removeOnComplete: true,
-          removeOnFail: false,
-        }
-      ).catch(err => {
-        logger.error("Audit queue failed", err);
-      });
-    }
+      },
+    });
 
 
     // ✅ Success log
@@ -160,41 +135,28 @@ exports.updateItem = async (id, updates, userId, requestId) => {
     );
 
     // Emit audit event
-    if (auditQueue) {
-      auditQueue.add(
-        "audit.log",
-        {
-          actorId: userId,
-          action: INVENTORY_UPDATED,
-          resourceType: "InventoryItem",
-          resourceId: updatedItem._id,
-          metadata: {
-            updatedFields: Object.keys(updates),
-            before: {
-              quantity: existingItem.quantity,
-              minThreshold: existingItem.minThreshold,
-              expiryDate: existingItem.expiryDate,
-            },
-            after: {
-              quantity: updatedItem.quantity,
-              minThreshold: updatedItem.minThreshold,
-              expiryDate: updatedItem.expiryDate,
-            },
+    await Outbox.create({
+      eventType: "inventory.updated",
+      payload: {
+        actorId: userId,
+        action: INVENTORY_UPDATED,
+        resourceType: "InventoryItem",
+        resourceId: updatedItem._id,
+        metadata: {
+          updatedFields: Object.keys(updates),
+          before: {
+            quantity: existingItem.quantity,
+            minThreshold: existingItem.minThreshold,
+            expiryDate: existingItem.expiryDate,
+          },
+          after: {
+            quantity: updatedItem.quantity,
+            minThreshold: updatedItem.minThreshold,
+            expiryDate: updatedItem.expiryDate,
           },
         },
-        {
-          attempts: 5,
-          backoff: {
-            type: "exponential",
-            delay: 500,
-          },
-          removeOnComplete: true,
-          removeOnFail: false,
-        }
-      ).catch(err => {
-        logger.error("Audit queue failed", err);
-      });
-    }
+      },
+    });
 
     // ✅ Success log
     logger.info("Inventory updated", {
