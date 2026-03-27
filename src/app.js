@@ -10,6 +10,7 @@ const metricsRoutes = require("./routes/metricsRoutes");
 const prometheusRoutes = require("./routes/prometheusRoutes");
 const { globalLimiter } = require("./middlewares/rateLimiter");
 const dlqRoutes = require("./routes/dlqRoutes");
+const bullBoard = require("./utils/bullBoard");
 
 // --- SWAGGER ADDITIONS START ---
 const swaggerUi = require("swagger-ui-express");
@@ -48,6 +49,7 @@ app.use("/api/users", userRoutes);
 // app.use("/metrics", metricsRoutes);
 app.use("/metrics", prometheusRoutes);
 app.use("/api/dlq", dlqRoutes);
+app.use("/admin/queues", bullBoard.getRouter());
 
 // Test route
 app.get("/", (req, res) => {

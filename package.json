@@ -19,6 +19,8 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@bull-board/api": "^6.20.6",
+    "@bull-board/express": "^6.20.6",
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.71.1",
     "cors": "^2.8.5",
