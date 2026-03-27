@@ -7,7 +7,7 @@ const { clearInventoryCache } = require("../utils/cacheHelper");
 const auditQueue = require("../queues/auditQueue")
 
 // 🔹 INCREMENT
-exports.incrementItem = async (id, amount, requestId) => {
+exports.incrementItem = async (id, amount, requestId, userId) => {
   try {
     const updatedItem = await InventoryItem.findOneAndUpdate(
       {
@@ -25,17 +25,29 @@ exports.incrementItem = async (id, amount, requestId) => {
     }
 
     if (auditQueue) {
-      auditQueue.add("audit.log", {
-        actorId: null,
-        action: INVENTORY_UPDATED,
-        resourceType: "InventoryItem",
-        resourceId: updatedItem._id,
-        metadata: {
-          type: "decrement",
-          amount,
-          newQuantity: updatedItem.quantity,
+      auditQueue.add(
+        "audit.log",
+        {
+          actorId: userId,
+          action: INVENTORY_UPDATED,
+          resourceType: "InventoryItem",
+          resourceId: updatedItem._id,
+          metadata: {
+            type: "increment", // keep correct type per function
+            amount,
+            newQuantity: updatedItem.quantity,
+          },
         },
-      }).catch(err => {
+        {
+          attempts: 5,
+          backoff: {
+            type: "exponential",
+            delay: 500,
+          },
+          removeOnComplete: true,
+          removeOnFail: false,
+        }
+      ).catch(err => {
         logger.error("Audit queue failed", err);
       });
     }
@@ -60,7 +72,7 @@ exports.incrementItem = async (id, amount, requestId) => {
 };
 
 // 🔹 DECREMENT
-exports.decrementItem = async (id, amount, requestId) => {
+exports.decrementItem = async (id, amount, requestId, userId) => {
   try {
     const updatedItem = await InventoryItem.findOneAndUpdate(
       {
@@ -79,17 +91,29 @@ exports.decrementItem = async (id, amount, requestId) => {
     }
 
     if (auditQueue) {
-      auditQueue.add("audit.log", {
-        actorId: null,
-        action: INVENTORY_UPDATED,
-        resourceType: "InventoryItem",
-        resourceId: updatedItem._id,
-        metadata: {
-          type: "decrement",
-          amount,
-          newQuantity: updatedItem.quantity,
+      auditQueue.add(
+        "audit.log",
+        {
+          actorId: userId,
+          action: INVENTORY_UPDATED,
+          resourceType: "InventoryItem",
+          resourceId: updatedItem._id,
+          metadata: {
+            type: "decrement", // keep correct type per function
+            amount,
+            newQuantity: updatedItem.quantity,
+          },
         },
-      }).catch(err => {
+        {
+          attempts: 5,
+          backoff: {
+            type: "exponential",
+            delay: 500,
+          },
+          removeOnComplete: true,
+          removeOnFail: false,
+        }
+      ).catch(err => {
         logger.error("Audit queue failed", err);
       });
     }
@@ -136,25 +160,41 @@ exports.updateItem = async (id, updates, userId, requestId) => {
     );
 
     // Emit audit event
-    await auditQueue.add("audit.log", {
-      actorId: userId,
-      action: INVENTORY_UPDATED,
-      resourceType: "InventoryItem",
-      resourceId: updatedItem._id,
-      metadata: {
-        updatedFields: Object.keys(updates),
-        before: {
-          quantity: existingItem.quantity,
-          minThreshold: existingItem.minThreshold,
-          expiryDate: existingItem.expiryDate,
+    if (auditQueue) {
+      auditQueue.add(
+        "audit.log",
+        {
+          actorId: userId,
+          action: INVENTORY_UPDATED,
+          resourceType: "InventoryItem",
+          resourceId: updatedItem._id,
+          metadata: {
+            updatedFields: Object.keys(updates),
+            before: {
+              quantity: existingItem.quantity,
+              minThreshold: existingItem.minThreshold,
+              expiryDate: existingItem.expiryDate,
+            },
+            after: {
+              quantity: updatedItem.quantity,
+              minThreshold: updatedItem.minThreshold,
+              expiryDate: updatedItem.expiryDate,
+            },
+          },
         },
-        after: {
-          quantity: updatedItem.quantity,
-          minThreshold: updatedItem.minThreshold,
-          expiryDate: updatedItem.expiryDate,
-        },
-      },
-    });
+        {
+          attempts: 5,
+          backoff: {
+            type: "exponential",
+            delay: 500,
+          },
+          removeOnComplete: true,
+          removeOnFail: false,
+        }
+      ).catch(err => {
+        logger.error("Audit queue failed", err);
+      });
+    }
 
     // ✅ Success log
     logger.info("Inventory updated", {
@@ -168,7 +208,7 @@ exports.updateItem = async (id, updates, userId, requestId) => {
 
     return updatedItem;
 
-    
+
 
   } catch (error) {
     // ❌ Error log

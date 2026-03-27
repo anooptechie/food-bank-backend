@@ -290,7 +290,8 @@ exports.incrementInventory = asyncErrorHandler(async (req, res, next) => {
   const updatedItem = await inventoryService.incrementItem(
     req.params.id,
     amount,
-    req.requestId
+    req.requestId,
+    req.user.id
   );
 
   //(enqueue job)
@@ -314,7 +315,8 @@ exports.decrementInventory = asyncErrorHandler(async (req, res, next) => {
   const updatedItem = await inventoryService.decrementItem(
     req.params.id,
     amount,
-    req.requestId
+    req.requestId,
+    req.user.id
   );
 
   //(enqueue job)
